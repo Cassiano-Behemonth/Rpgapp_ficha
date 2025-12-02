@@ -16,18 +16,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class Pericia(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    var nome: String,
-    var atributo: String,
-    var treino: Boolean = false,
-    var bonus: String = ""
-)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rpgapp.viewmodel.FichaViewModel
+import com.example.rpgapp.data.entity.PericiaEntity
 
 @Composable
-fun PericiasScreen(onBack: () -> Unit) {
-    val pericias = remember { mutableStateListOf<Pericia>() }
+fun PericiasScreen(
+    onBack: () -> Unit,
+    viewModel: FichaViewModel = viewModel()
+) {
+    val pericias by viewModel.pericias.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     // Lista de perícias padrão do sistema
@@ -72,7 +70,7 @@ fun PericiasScreen(onBack: () -> Unit) {
         ) {
             Column {
                 Text(
-                    "PERÍCIAS",
+                    "▸ PERÍCIAS",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -89,7 +87,7 @@ fun PericiasScreen(onBack: () -> Unit) {
                     FilledTonalButton(
                         onClick = {
                             periciasPadrao.forEach { (nome, attr) ->
-                                pericias.add(Pericia(nome = nome, atributo = attr))
+                                viewModel.adicionarPericia(nome, attr)
                             }
                         }
                     ) {
@@ -129,9 +127,14 @@ fun PericiasScreen(onBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
+                        "🎲",
+                        style = MaterialTheme.typography.displayMedium
+                    )
+                    Text(
                         "Nenhuma perícia cadastrada",
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         "Adicione perícias manualmente ou use o conjunto padrão",
@@ -148,12 +151,16 @@ fun PericiasScreen(onBack: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                pericias.forEachIndexed { index, pericia ->
+                pericias.forEach { pericia ->
                     PericiaCard(
                         pericia = pericia,
-                        onTreinoChange = { pericias[index] = pericia.copy(treino = it) },
-                        onBonusChange = { pericias[index] = pericia.copy(bonus = it) },
-                        onDelete = { pericias.removeAt(index) }
+                        onTreinoChange = {
+                            viewModel.atualizarPericia(pericia.copy(treino = it))
+                        },
+                        onBonusChange = {
+                            viewModel.atualizarPericia(pericia.copy(bonus = it.toIntOrNull() ?: 0))
+                        },
+                        onDelete = { viewModel.deletarPericia(pericia) }
                     )
                 }
             }
@@ -166,7 +173,7 @@ fun PericiasScreen(onBack: () -> Unit) {
             pericia = null,
             onDismiss = { showAddDialog = false },
             onConfirm = { nome, atributo ->
-                pericias.add(Pericia(nome = nome, atributo = atributo))
+                viewModel.adicionarPericia(nome, atributo)
                 showAddDialog = false
             }
         )
@@ -175,7 +182,7 @@ fun PericiasScreen(onBack: () -> Unit) {
 
 @Composable
 fun PericiaCard(
-    pericia: Pericia,
+    pericia: PericiaEntity,
     onTreinoChange: (Boolean) -> Unit,
     onBonusChange: (String) -> Unit,
     onDelete: () -> Unit
@@ -203,7 +210,11 @@ fun PericiaCard(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (pericia.treino)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
+                        MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     pericia.atributo,
@@ -212,14 +223,14 @@ fun PericiaCard(
                 )
             }
 
-            // Controles compactos
+            // Controles
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Bônus
                 OutlinedTextField(
-                    value = pericia.bonus,
+                    value = if (pericia.bonus == 0) "" else pericia.bonus.toString(),
                     onValueChange = { if (it.length <= 2) onBonusChange(it) },
                     modifier = Modifier.width(60.dp),
                     singleLine = true,
@@ -254,7 +265,7 @@ fun PericiaCard(
 @Composable
 fun PericiaDialog(
     title: String,
-    pericia: Pericia?,
+    pericia: PericiaEntity?,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit
 ) {
@@ -266,7 +277,13 @@ fun PericiaDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = {
+            Text(
+                title,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -321,13 +338,18 @@ fun PericiaDialog(
                 },
                 enabled = nome.isNotBlank()
             ) {
-                Text("Salvar")
+                Text(
+                    "Salvar",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancelar")
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }

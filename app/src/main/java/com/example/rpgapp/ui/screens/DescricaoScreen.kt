@@ -8,20 +8,44 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rpgapp.viewmodel.FichaViewModel
+import kotlinx.coroutines.delay
 
 @Composable
-fun DescricaoScreen(onBack: () -> Unit) {
+fun DescricaoScreen(
+    onBack: () -> Unit,
+    viewModel: FichaViewModel = viewModel()
+) {
+    val ficha by viewModel.ficha.collectAsState()
+
     var nome by remember { mutableStateOf("") }
     var jogador by remember { mutableStateOf("") }
     var origem by remember { mutableStateOf("") }
     var classe by remember { mutableStateOf("") }
     var trilha by remember { mutableStateOf("") }
     var patente by remember { mutableStateOf("") }
-
     var aparencia by remember { mutableStateOf("") }
     var personalidade by remember { mutableStateOf("") }
     var historia by remember { mutableStateOf("") }
     var anotacoes by remember { mutableStateOf("") }
+    var showSaveConfirmation by remember { mutableStateOf(false) }
+
+    // Carrega dados quando ficha está disponível
+    LaunchedEffect(ficha) {
+        ficha?.let {
+            nome = it.nome
+            jogador = it.jogador
+            origem = it.origem
+            classe = it.classe
+            trilha = it.trilha
+            patente = it.patente
+            aparencia = it.aparencia
+            personalidade = it.personalidade
+            historia = it.historia
+            anotacoes = it.anotacoes
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -31,7 +55,7 @@ fun DescricaoScreen(onBack: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            "DESCRIÇÃO DO PERSONAGEM",
+            "▸ DESCRIÇÃO DO PERSONAGEM",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -218,6 +242,37 @@ fun DescricaoScreen(onBack: () -> Unit) {
                     maxLines = 7
                 )
             }
+        }
+
+        // Botão salvar
+        Button(
+            onClick = {
+                viewModel.salvarDescricao(
+                    nome, jogador, origem, classe, trilha, patente,
+                    aparencia, personalidade, historia, anotacoes
+                )
+                showSaveConfirmation = true
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("💾 SALVAR DESCRIÇÃO", fontWeight = FontWeight.Bold)
+        }
+    }
+
+    // Confirmação de salvamento
+    if (showSaveConfirmation) {
+        LaunchedEffect(Unit) {
+            delay(2000)
+            showSaveConfirmation = false
+        }
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary
+        ) {
+            Text("✓ Descrição salva com sucesso!")
         }
     }
 }

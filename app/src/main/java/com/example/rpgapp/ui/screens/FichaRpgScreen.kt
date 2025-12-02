@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.math.cos
@@ -24,31 +25,58 @@ fun FichaRpgScreen(
     onSalvar: () -> Unit,
     onInventario: () -> Unit,
     onDescricao: () -> Unit,
-    onPericias: () -> Unit
+    onPericias: () -> Unit,
+    viewModel: com.example.rpgapp.viewmodel.FichaViewModel
 ) {
-    // Estados dos atributos (apenas 3)
+    val ficha by viewModel.ficha.collectAsState()
+
+    // Estados dos atributos
     var forca by remember { mutableStateOf("") }
     var agilidade by remember { mutableStateOf("") }
     var presenca by remember { mutableStateOf("") }
-
-    // Estados de recursos
     var nex by remember { mutableStateOf("5") }
     var vidaAtual by remember { mutableStateOf("") }
     var vidaMax by remember { mutableStateOf("") }
     var sanidadeAtual by remember { mutableStateOf("") }
     var sanidadeMax by remember { mutableStateOf("") }
 
-    // Abas
+    // Carrega dados da ficha quando disponível
+    LaunchedEffect(ficha) {
+        ficha?.let {
+            forca = it.forca.toString()
+            agilidade = it.agilidade.toString()
+            presenca = it.presenca.toString()
+            nex = it.nex.toString()
+            vidaAtual = it.vidaAtual.toString()
+            vidaMax = it.vidaMax.toString()
+            sanidadeAtual = it.sanidadeAtual.toString()
+            sanidadeMax = it.sanidadeMax.toString()
+        }
+    }
+
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Ficha", "Perícias", "Inventário", "Descrição")
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = selectedTab) {
+        // TabRow com scroll para nomes longos
+        ScrollableTabRow(
+            selectedTabIndex = selectedTab,
+            edgePadding = 0.dp,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
-                    text = { Text(title) }
+                    text = {
+                        Text(
+                            title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 14.sp
+                        )
+                    }
                 )
             }
         }
@@ -71,11 +99,16 @@ fun FichaRpgScreen(
                 onVidaMaxChange = { vidaMax = it },
                 onSanidadeAtualChange = { sanidadeAtual = it },
                 onSanidadeMaxChange = { sanidadeMax = it },
-                onSalvar = onSalvar
+                onSalvar = {
+                    viewModel.salvarFicha(
+                        forca, agilidade, presenca, nex,
+                        vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
+                    )
+                }
             )
-            1 -> PericiasScreen(onBack = {})
-            2 -> InventarioScreen(onBack = {})
-            3 -> DescricaoScreen(onBack = {})
+            1 -> PericiasScreen(onBack = {}, viewModel = viewModel)
+            2 -> InventarioScreen(onBack = {}, viewModel = viewModel)
+            3 -> DescricaoScreen(onBack = {}, viewModel = viewModel)
         }
     }
 }
@@ -105,6 +138,7 @@ fun FichaTab(
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
     var diceFaces by remember { mutableStateOf(20) }
+    var showSaveConfirmation by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -113,7 +147,7 @@ fun FichaTab(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Seção de Atributos (só 3)
+        // Seção de Atributos
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -122,7 +156,7 @@ fun FichaTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "ATRIBUTOS",
+                    "▸ ATRIBUTOS",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -149,7 +183,7 @@ fun FichaTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "RECURSOS",
+                    "▸ RECURSOS",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -185,7 +219,7 @@ fun FichaTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "ROLAGEM DE DADOS",
+                    "▸ ROLAGEM DE DADOS",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -253,7 +287,7 @@ fun FichaTab(
                     )
                     historicoRolagens.forEach { rolagem ->
                         Text(
-                            rolagem,
+                            "▹ $rolagem",
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(vertical = 2.dp),
                             color = MaterialTheme.colorScheme.primary
@@ -264,10 +298,36 @@ fun FichaTab(
         }
 
         Button(
-            onClick = onSalvar,
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                onSalvar()
+                showSaveConfirmation = true
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("SALVAR FICHA")
+            Text("💾 SALVAR FICHA", fontWeight = FontWeight.Bold, color = Color.Black)
+        }
+    }
+
+    // Confirmação de salvamento
+    if (showSaveConfirmation) {
+        LaunchedEffect(Unit) {
+            delay(2000)
+            showSaveConfirmation = false
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Snackbar(
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Text("✓ Ficha salva com sucesso!", color = Color.Black)
+            }
         }
     }
 
@@ -351,21 +411,19 @@ fun AnimatedDice(faces: Int) {
         val radius = size.minDimension / 3
 
         rotate(rotation) {
-            // Desenha um dado 3D simplificado
             drawCircle(
-                color = Color(0xFF9333EA),
+                color = Color(0xFF00FF41),
                 radius = radius,
                 center = center
             )
 
-            // Pontos do dado
             val dotRadius = radius / 8
             when (faces) {
                 20 -> {
                     for (i in 0..5) {
                         val angle = (i * 60f + rotation) * (Math.PI / 180f)
                         drawCircle(
-                            color = Color.White,
+                            color = Color.Black,
                             radius = dotRadius,
                             center = androidx.compose.ui.geometry.Offset(
                                 centerX + (radius * 0.6f * cos(angle)).toFloat(),
@@ -376,7 +434,7 @@ fun AnimatedDice(faces: Int) {
                 }
                 else -> {
                     drawCircle(
-                        color = Color.White,
+                        color = Color.Black,
                         radius = dotRadius,
                         center = center
                     )
@@ -397,14 +455,19 @@ fun AtributoCompacto(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
         )
         OutlinedTextField(
             value = value,
             onValueChange = { if (it.length <= 2) onValueChange(it) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            textStyle = LocalTextStyle.current.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
         )
     }
 }
@@ -422,7 +485,10 @@ fun RecursoField(
         label = { Text(label, fontSize = 12.sp) },
         modifier = modifier,
         singleLine = true,
-        textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
+        textStyle = LocalTextStyle.current.copy(
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.primary
+        )
     )
 }
 
