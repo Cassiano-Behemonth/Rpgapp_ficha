@@ -11,18 +11,15 @@ fun AppNavigation() {
     val nav = rememberNavController()
 
     NavHost(navController = nav, startDestination = "ficha") {
-
         composable("ficha") {
             FichaRpgScreen(
-                onSalvar = { /* implemente depois */ },
-                onInventario = { nav.navigate("inventario") },
-                onDescricao = { nav.navigate("descricao") },
-                onPericias = { nav.navigate("pericias") }
+                onSalvar = {
+
+                },
+                onInventario = { /* Não mais necessário com TabRow */ },
+                onDescricao = { /* Não mais necessário com TabRow */ },
+                onPericias = { /* Não mais necessário com TabRow */ }
             )
         }
-
-        composable("pericias") { PericiasScreen(onBack = { nav.popBackStack() }) }
-        composable("inventario") { InventarioScreen(onBack = { nav.popBackStack() }) }
-        composable("descricao") { DescricaoScreen(onBack = { nav.popBackStack() }) }
     }
 }
