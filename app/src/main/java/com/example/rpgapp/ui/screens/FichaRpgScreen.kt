@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.math.cos
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun FichaRpgScreen(
@@ -27,11 +28,12 @@ fun FichaRpgScreen(
     onInventario: () -> Unit,
     onDescricao: () -> Unit,
     onPericias: () -> Unit,
-    viewModel: com.example.rpgapp.viewmodel.FichaViewModel
+    viewModel: com.example.rpgapp.viewmodel.FichaViewModel,
+    onThemeChange: () -> Unit = {}
 ) {
     val ficha by viewModel.ficha.collectAsState()
 
-    // Estados dos atributos
+    var nome by remember { mutableStateOf("") }
     var forca by remember { mutableStateOf("") }
     var agilidade by remember { mutableStateOf("") }
     var presenca by remember { mutableStateOf("") }
@@ -41,9 +43,9 @@ fun FichaRpgScreen(
     var sanidadeAtual by remember { mutableStateOf("") }
     var sanidadeMax by remember { mutableStateOf("") }
 
-    // Carrega dados da ficha quando disponível
     LaunchedEffect(ficha) {
         ficha?.let {
+            nome = it.nome
             forca = it.forca.toString()
             agilidade = it.agilidade.toString()
             presenca = it.presenca.toString()
@@ -55,6 +57,15 @@ fun FichaRpgScreen(
         }
     }
 
+    // Salvamento automático quando qualquer campo muda
+    LaunchedEffect(nome, forca, agilidade, presenca, nex, vidaAtual, vidaMax, sanidadeAtual, sanidadeMax) {
+        kotlinx.coroutines.delay(1000) // Espera 1 segundo após a última digitação
+        viewModel.salvarFichaCompleta(
+            nome, forca, agilidade, presenca, nex,
+            vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
+        )
+    }
+
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Ficha", "Perícias", "Inventário", "Descrição")
 
@@ -63,7 +74,6 @@ fun FichaRpgScreen(
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        // TabRow com scroll para nomes longos
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
             edgePadding = 0.dp,
@@ -88,6 +98,7 @@ fun FichaRpgScreen(
 
         when (selectedTab) {
             0 -> FichaTab(
+                nome = nome,
                 forca = forca,
                 agilidade = agilidade,
                 presenca = presenca,
@@ -96,6 +107,8 @@ fun FichaRpgScreen(
                 vidaMax = vidaMax,
                 sanidadeAtual = sanidadeAtual,
                 sanidadeMax = sanidadeMax,
+
+                onNomeChange = { nome = it },
                 onForcaChange = { forca = it },
                 onAgilidadeChange = { agilidade = it },
                 onPresencaChange = { presenca = it },
@@ -104,12 +117,15 @@ fun FichaRpgScreen(
                 onVidaMaxChange = { vidaMax = it },
                 onSanidadeAtualChange = { sanidadeAtual = it },
                 onSanidadeMaxChange = { sanidadeMax = it },
+
                 onSalvar = {
                     viewModel.salvarFicha(
                         forca, agilidade, presenca, nex,
                         vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
                     )
-                }
+                },
+
+                onThemeChange = onThemeChange
             )
             1 -> PericiasScreen(onBack = {}, viewModel = viewModel)
             2 -> InventarioScreen(onBack = {}, viewModel = viewModel)
@@ -120,6 +136,7 @@ fun FichaRpgScreen(
 
 @Composable
 fun FichaTab(
+    nome: String,
     forca: String,
     agilidade: String,
     presenca: String,
@@ -128,6 +145,7 @@ fun FichaTab(
     vidaMax: String,
     sanidadeAtual: String,
     sanidadeMax: String,
+    onNomeChange: (String) -> Unit,
     onForcaChange: (String) -> Unit,
     onAgilidadeChange: (String) -> Unit,
     onPresencaChange: (String) -> Unit,
@@ -136,7 +154,8 @@ fun FichaTab(
     onVidaMaxChange: (String) -> Unit,
     onSanidadeAtualChange: (String) -> Unit,
     onSanidadeMaxChange: (String) -> Unit,
-    onSalvar: () -> Unit
+    onSalvar: () -> Unit,
+    onThemeChange: () -> Unit
 ) {
     var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
     var dadoCustom by remember { mutableStateOf("") }
@@ -153,7 +172,32 @@ fun FichaTab(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Seção de Atributos
+        // Nome do Personagem
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "▸ NOME DO PERSONAGEM",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = nome,
+                    onValueChange = onNomeChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("Digite o nome do personagem") }
+                )
+            }
+        }
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -180,7 +224,6 @@ fun FichaTab(
             }
         }
 
-        // Seção de Recursos
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -216,7 +259,6 @@ fun FichaTab(
             }
         }
 
-        // Seção de Dados
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -232,7 +274,6 @@ fun FichaTab(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Dados rápidos
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -255,7 +296,6 @@ fun FichaTab(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Rolagem personalizada
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -270,12 +310,12 @@ fun FichaTab(
                     )
                     Button(
                         onClick = {
-                            val resultado = rolarCustom(dadoCustom)
+                            val (resultado, texto) = rolarCustom(dadoCustom)
                             if (resultado > 0) {
                                 diceResult = resultado
                                 diceFaces = 20
                                 showDiceAnimation = true
-                                historicoRolagens = listOf("$dadoCustom = $resultado") + historicoRolagens.take(4)
+                                historicoRolagens = listOf(texto) + historicoRolagens.take(4)
                             }
                         }
                     ) {
@@ -283,7 +323,6 @@ fun FichaTab(
                     }
                 }
 
-                // Histórico
                 if (historicoRolagens.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -313,11 +352,28 @@ fun FichaTab(
                 containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
-            Text("💾 SALVAR FICHA", fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("💾 SALVAR MANUALMENTE", fontWeight = FontWeight.Bold)
+        }
+
+        Text(
+            "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        OutlinedButton(
+            onClick = onThemeChange,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("🎨 TROCAR TEMA", fontWeight = FontWeight.Bold)
         }
     }
 
-    // Confirmação de salvamento
     if (showSaveConfirmation) {
         LaunchedEffect(Unit) {
             delay(2000)
@@ -332,12 +388,11 @@ fun FichaTab(
             Snackbar(
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Text("✓ Ficha salva com sucesso!", color = Color.Black)
+                Text("✓ Ficha salva com sucesso!")
             }
         }
     }
 
-    // Animação do dado
     if (showDiceAnimation) {
         DiceRollAnimation(
             result = diceResult,
@@ -418,7 +473,7 @@ fun AnimatedDice(faces: Int) {
 
         rotate(rotation) {
             drawCircle(
-                color = Color(0xFF00E676),
+                color = Color(0xFF4CAF50),
                 radius = radius,
                 center = center
             )
@@ -498,17 +553,53 @@ fun RecursoField(
     )
 }
 
-fun rolarCustom(expr: String): Int {
-    val regex = Regex("(\\d+)d(\\d+)([+-]\\d+)?")
-    val match = regex.find(expr.lowercase()) ?: return 0
+fun rolarCustom(expr: String): Pair<Int, String> {
+    val regex = Regex("(\\d+)d(\\d+)([+\\-*/]\\d+)?")
+    val match = regex.find(expr.lowercase()) ?: return Pair(0, "")
 
-    val qtd = match.groupValues[1].toIntOrNull() ?: return 0
-    val faces = match.groupValues[2].toIntOrNull() ?: return 0
-    val modStr = match.groupValues[3].ifEmpty { "+0" }
-    val mod = modStr.toIntOrNull() ?: 0
+    val qtd = match.groupValues[1].toIntOrNull() ?: return Pair(0, "")
+    val faces = match.groupValues[2].toIntOrNull() ?: return Pair(0, "")
+    val modStr = match.groupValues[3]
 
-    var total = 0
-    repeat(qtd) { total += (1..faces).random() }
+    // Rola todos os dados
+    val resultados = mutableListOf<Int>()
+    repeat(qtd) {
+        resultados.add((1..faces).random())
+    }
 
-    return total + mod
+    // Pega o maior resultado
+    val maiorResultado = resultados.maxOrNull() ?: 0
+
+    // Aplica o modificador apenas no maior
+    val resultadoFinal = if (modStr.isNotEmpty()) {
+        val operador = modStr[0]
+        val valor = modStr.substring(1).toIntOrNull() ?: 0
+
+        when (operador) {
+            '+' -> maiorResultado + valor
+            '-' -> maiorResultado - valor
+            '*' -> maiorResultado * valor
+            '/' -> if (valor != 0) maiorResultado / valor else maiorResultado
+            else -> maiorResultado
+        }
+    } else {
+        maiorResultado
+    }
+
+    // Monta o texto simplificado
+    val textoFinal = if (qtd > 1) {
+        if (modStr.isNotEmpty()) {
+            "dados: ${resultados.joinToString(", ")} $modStr = $resultadoFinal"
+        } else {
+            "dados: ${resultados.joinToString(", ")} = $maiorResultado"
+        }
+    } else {
+        if (modStr.isNotEmpty()) {
+            "dado: $maiorResultado $modStr = $resultadoFinal"
+        } else {
+            "dado: $maiorResultado = $maiorResultado"
+        }
+    }
+
+    return Pair(resultadoFinal, textoFinal)
 }

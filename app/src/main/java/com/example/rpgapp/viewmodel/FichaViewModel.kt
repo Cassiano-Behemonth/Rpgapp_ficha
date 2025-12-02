@@ -77,6 +77,35 @@ class FichaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun salvarFichaCompleta(
+        nome: String,
+        forca: String,
+        agilidade: String,
+        presenca: String,
+        nex: String,
+        vidaAtual: String,
+        vidaMax: String,
+        sanidadeAtual: String,
+        sanidadeMax: String
+    ) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: FichaEntity()
+            fichaDao.updateFicha(
+                fichaAtual.copy(
+                    nome = nome,
+                    forca = forca.toIntOrNull() ?: 0,
+                    agilidade = agilidade.toIntOrNull() ?: 0,
+                    presenca = presenca.toIntOrNull() ?: 0,
+                    nex = nex.toIntOrNull() ?: 5,
+                    vidaAtual = vidaAtual.toIntOrNull() ?: 0,
+                    vidaMax = vidaMax.toIntOrNull() ?: 0,
+                    sanidadeAtual = sanidadeAtual.toIntOrNull() ?: 0,
+                    sanidadeMax = sanidadeMax.toIntOrNull() ?: 0
+                )
+            )
+        }
+    }
+
     fun salvarDescricao(
         nome: String,
         jogador: String,
