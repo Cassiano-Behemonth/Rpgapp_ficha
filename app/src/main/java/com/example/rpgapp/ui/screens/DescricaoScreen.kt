@@ -3,9 +3,11 @@ package com.example.rpgapp.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,6 +52,7 @@ fun DescricaoScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -268,11 +271,17 @@ fun DescricaoScreen(
             delay(2000)
             showSaveConfirmation = false
         }
-        Snackbar(
-            modifier = Modifier.padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            Text("✓ Descrição salva com sucesso!")
+            Snackbar(
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Text("✓ Descrição salva com sucesso!")
+            }
         }
     }
 }

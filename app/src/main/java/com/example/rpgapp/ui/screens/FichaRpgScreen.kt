@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -57,7 +58,11 @@ fun FichaRpgScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Ficha", "Perícias", "Inventário", "Descrição")
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
         // TabRow com scroll para nomes longos
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
@@ -143,6 +148,7 @@ fun FichaTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -412,7 +418,7 @@ fun AnimatedDice(faces: Int) {
 
         rotate(rotation) {
             drawCircle(
-                color = Color(0xFF00FF41),
+                color = Color(0xFF00E676),
                 radius = radius,
                 center = center
             )
