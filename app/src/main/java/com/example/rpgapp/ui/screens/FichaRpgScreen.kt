@@ -29,7 +29,8 @@ fun FichaRpgScreen(
     onDescricao: () -> Unit,
     onPericias: () -> Unit,
     viewModel: com.example.rpgapp.viewmodel.FichaViewModel,
-    onThemeChange: () -> Unit = {}
+    onThemeChange: () -> Unit = {},
+    onModeChange: () -> Unit = {}
 ) {
     val ficha by viewModel.ficha.collectAsState()
 
@@ -125,7 +126,8 @@ fun FichaRpgScreen(
                     )
                 },
 
-                onThemeChange = onThemeChange
+                onThemeChange = onThemeChange,
+                onModeChange = onModeChange
             )
             1 -> PericiasScreen(onBack = {}, viewModel = viewModel)
             2 -> InventarioScreen(onBack = {}, viewModel = viewModel)
@@ -155,7 +157,8 @@ fun FichaTab(
     onSanidadeAtualChange: (String) -> Unit,
     onSanidadeMaxChange: (String) -> Unit,
     onSalvar: () -> Unit,
-    onThemeChange: () -> Unit
+    onThemeChange: () -> Unit,
+    onModeChange: () -> Unit
 ) {
     var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
     var dadoCustom by remember { mutableStateOf("") }
@@ -371,6 +374,16 @@ fun FichaTab(
             )
         ) {
             Text("🎨 TROCAR TEMA", fontWeight = FontWeight.Bold)
+        }
+
+        OutlinedButton(
+            onClick = onModeChange,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("🔄 TROCAR MODO DE JOGO", fontWeight = FontWeight.Bold)
         }
     }
 

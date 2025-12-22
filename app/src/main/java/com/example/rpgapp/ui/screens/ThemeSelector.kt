@@ -28,6 +28,7 @@ enum class AppTheme {
 @Composable
 fun ThemeSelectorScreen(
     currentTheme: AppTheme,
+    currentMode: GameMode? = null,
     onThemeSelected: (AppTheme) -> Unit
 ) {
     Column(

@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.core.view.WindowCompat
 import com.example.rpgapp.navigation.AppNavigation
 import com.example.rpgapp.ui.screens.AppTheme
+import com.example.rpgapp.ui.screens.GameMode
 import com.example.rpgapp.ui.theme.RpgTheme
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.Color
@@ -22,6 +23,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+            // Gerencia o tema
             var currentTheme by remember {
                 mutableStateOf(
                     try {
@@ -31,6 +34,18 @@ class MainActivity : ComponentActivity() {
                         )
                     } catch (e: Exception) {
                         AppTheme.GREEN_BLACK
+                    }
+                )
+            }
+
+            // Gerencia o modo de jogo
+            var currentMode by remember {
+                mutableStateOf(
+                    try {
+                        val modeName = sharedPrefs.getString("selected_mode", null)
+                        modeName?.let { GameMode.valueOf(it) }
+                    } catch (e: Exception) {
+                        null
                     }
                 )
             }
@@ -58,9 +73,14 @@ class MainActivity : ComponentActivity() {
             RpgTheme(theme = currentTheme) {
                 AppNavigation(
                     currentTheme = currentTheme,
+                    currentMode = currentMode,
                     onThemeChange = { theme ->
                         currentTheme = theme
                         sharedPrefs.edit().putString("selected_theme", theme.name).apply()
+                    },
+                    onModeChange = { mode ->
+                        currentMode = mode
+                        sharedPrefs.edit().putString("selected_mode", mode.name).apply()
                     }
                 )
             }
