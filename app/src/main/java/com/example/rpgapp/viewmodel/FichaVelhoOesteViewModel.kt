@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rpgapp.data.AppDatabase
 import com.example.rpgapp.data.entity.FichaVelhoOesteEntity
-import com.example.rpgapp.data.entity.PericiaVelhoOesteEntity
+import com.example.rpgapp.data.entity.AntecedenteVelhoOesteEntity
+import com.example.rpgapp.data.entity.HabilidadeVelhoOesteEntity
 import com.example.rpgapp.data.entity.ItemVelhoOesteEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -13,7 +14,8 @@ import kotlinx.coroutines.launch
 class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val fichaDao = database.fichaVelhoOesteDao()
-    private val periciaDao = database.periciaVelhoOesteDao()
+    private val antecedenteDao = database.antecedenteVelhoOesteDao()
+    private val habilidadeDao = database.habilidadeVelhoOesteDao()
     private val itemDao = database.itemVelhoOesteDao()
 
     val ficha: StateFlow<FichaVelhoOesteEntity?> = fichaDao.getFicha()
@@ -22,9 +24,16 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
     private val _fichaId = MutableStateFlow(0L)
     val fichaId: StateFlow<Long> = _fichaId
 
-    val pericias: StateFlow<List<PericiaVelhoOesteEntity>> = fichaId
+    val antecedentes: StateFlow<List<AntecedenteVelhoOesteEntity>> = fichaId
         .flatMapLatest { id ->
-            if (id > 0) periciaDao.getPericiasFromFicha(id)
+            if (id > 0) antecedenteDao.getAntecedentesFromFicha(id)
+            else flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val habilidades: StateFlow<List<HabilidadeVelhoOesteEntity>> = fichaId
+        .flatMapLatest { id ->
+            if (id > 0) habilidadeDao.getHabilidadesFromFicha(id)
             else flowOf(emptyList())
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -51,29 +60,23 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
     }
 
     fun salvarFicha(
-        pontaria: String,
-        vigor: String,
-        esperteza: String,
-        carisma: String,
-        reflexos: String,
-        vidaAtual: String,
-        vidaMax: String,
-        municao: String,
-        dinheiro: String
+        fisico: String,
+        velocidade: String,
+        intelecto: String,
+        coragem: String,
+        vidaAtual: Int,
+        dorAtual: Int
     ) {
         viewModelScope.launch {
             val fichaAtual = ficha.value ?: FichaVelhoOesteEntity()
             fichaDao.updateFicha(
                 fichaAtual.copy(
-                    pontaria = pontaria.toIntOrNull() ?: 0,
-                    vigor = vigor.toIntOrNull() ?: 0,
-                    esperteza = esperteza.toIntOrNull() ?: 0,
-                    carisma = carisma.toIntOrNull() ?: 0,
-                    reflexos = reflexos.toIntOrNull() ?: 0,
-                    vidaAtual = vidaAtual.toIntOrNull() ?: 0,
-                    vidaMax = vidaMax.toIntOrNull() ?: 0,
-                    municao = municao.toIntOrNull() ?: 0,
-                    dinheiro = dinheiro
+                    fisico = fisico.toIntOrNull() ?: 0,
+                    velocidade = velocidade.toIntOrNull() ?: 0,
+                    intelecto = intelecto.toIntOrNull() ?: 0,
+                    coragem = coragem.toIntOrNull() ?: 0,
+                    vidaAtual = vidaAtual,
+                    dorAtual = dorAtual
                 )
             )
         }
@@ -81,32 +84,44 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
 
     fun salvarFichaCompleta(
         nome: String,
-        pontaria: String,
-        vigor: String,
-        esperteza: String,
-        carisma: String,
-        reflexos: String,
-        vidaAtual: String,
-        vidaMax: String,
-        municao: String,
-        dinheiro: String
+        fisico: String,
+        velocidade: String,
+        intelecto: String,
+        coragem: String,
+        defesa: String,
+        dinheiro: String,
+        vidaAtual: Int,
+        dorAtual: Int
     ) {
         viewModelScope.launch {
             val fichaAtual = ficha.value ?: FichaVelhoOesteEntity()
             fichaDao.updateFicha(
                 fichaAtual.copy(
                     nome = nome,
-                    pontaria = pontaria.toIntOrNull() ?: 0,
-                    vigor = vigor.toIntOrNull() ?: 0,
-                    esperteza = esperteza.toIntOrNull() ?: 0,
-                    carisma = carisma.toIntOrNull() ?: 0,
-                    reflexos = reflexos.toIntOrNull() ?: 0,
-                    vidaAtual = vidaAtual.toIntOrNull() ?: 0,
-                    vidaMax = vidaMax.toIntOrNull() ?: 0,
-                    municao = municao.toIntOrNull() ?: 0,
-                    dinheiro = dinheiro
+                    fisico = fisico.toIntOrNull() ?: 0,
+                    velocidade = velocidade.toIntOrNull() ?: 0,
+                    intelecto = intelecto.toIntOrNull() ?: 0,
+                    coragem = coragem.toIntOrNull() ?: 0,
+                    defesa = defesa.toIntOrNull() ?: 0,
+                    dinheiro = dinheiro,
+                    vidaAtual = vidaAtual,
+                    dorAtual = dorAtual
                 )
             )
+        }
+    }
+
+    fun atualizarVida(vidaAtual: Int) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: return@launch
+            fichaDao.updateFicha(fichaAtual.copy(vidaAtual = vidaAtual))
+        }
+    }
+
+    fun atualizarDor(dorAtual: Int) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: return@launch
+            fichaDao.updateFicha(fichaAtual.copy(dorAtual = dorAtual))
         }
     }
 
@@ -139,27 +154,52 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    fun adicionarPericia(nome: String, atributo: String) {
+    fun adicionarAntecedente(nome: String, pontos: Int = 0) {
         viewModelScope.launch {
-            periciaDao.insertPericia(
-                PericiaVelhoOesteEntity(
+            antecedenteDao.insertAntecedente(
+                AntecedenteVelhoOesteEntity(
                     fichaId = fichaId.value,
                     nome = nome,
-                    atributo = atributo
+                    pontos = pontos
                 )
             )
         }
     }
 
-    fun atualizarPericia(pericia: PericiaVelhoOesteEntity) {
+    fun atualizarAntecedente(antecedente: AntecedenteVelhoOesteEntity) {
         viewModelScope.launch {
-            periciaDao.updatePericia(pericia)
+            antecedenteDao.updateAntecedente(antecedente)
         }
     }
 
-    fun deletarPericia(pericia: PericiaVelhoOesteEntity) {
+    fun deletarAntecedente(antecedente: AntecedenteVelhoOesteEntity) {
         viewModelScope.launch {
-            periciaDao.deletePericia(pericia)
+            antecedenteDao.deleteAntecedente(antecedente)
+        }
+    }
+
+    fun adicionarHabilidade(nome: String, descricao: String, danoOuDado: String) {
+        viewModelScope.launch {
+            habilidadeDao.insertHabilidade(
+                HabilidadeVelhoOesteEntity(
+                    fichaId = fichaId.value,
+                    nome = nome,
+                    descricao = descricao,
+                    danoOuDado = danoOuDado
+                )
+            )
+        }
+    }
+
+    fun atualizarHabilidade(habilidade: HabilidadeVelhoOesteEntity) {
+        viewModelScope.launch {
+            habilidadeDao.updateHabilidade(habilidade)
+        }
+    }
+
+    fun deletarHabilidade(habilidade: HabilidadeVelhoOesteEntity) {
+        viewModelScope.launch {
+            habilidadeDao.deleteHabilidade(habilidade)
         }
     }
 

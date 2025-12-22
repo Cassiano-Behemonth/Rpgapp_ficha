@@ -9,17 +9,20 @@ data class FichaVelhoOesteEntity(
     val id: Long = 0,
 
     // Atributos principais
-    val pontaria: Int = 0,
-    val vigor: Int = 0,
-    val esperteza: Int = 0,
-    val carisma: Int = 0,
-    val reflexos: Int = 0,
+    val fisico: Int = 0,
+    val velocidade: Int = 0,
+    val intelecto: Int = 0,
+    val coragem: Int = 0,
+    val defesa: Int = 0,
 
-    // Recursos
-    val vidaAtual: Int = 0,
-    val vidaMax: Int = 0,
-    val municao: Int = 0,
-    val dinheiro: String = "0",
+    // Sistema de vida (círculos preenchidos)
+    val vidaAtual: Int = 6, // Quantidade de círculos preenchidos
+
+    // Sistema de dor (0-6 pontos fixos)
+    val dorAtual: Int = 0, // Quantidade de pontos de dor marcados
+
+    // Dinheiro
+    val dinheiro: String = "",
 
     // Informações do personagem
     val nome: String = "",
@@ -33,4 +36,8 @@ data class FichaVelhoOesteEntity(
     val personalidade: String = "",
     val historia: String = "",
     val anotacoes: String = ""
-)
+) {
+    // Vida máxima = 6 base + pontos em Físico
+    val vidaMaxima: Int
+        get() = 6 + fisico
+}

@@ -1,5 +1,6 @@
 package com.example.rpgapp.ui.screens.velhooeste
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,22 +22,16 @@ fun DescricaoVelhoOesteScreen(
 
     var nome by remember { mutableStateOf("") }
     var jogador by remember { mutableStateOf("") }
-    var arquetipo by remember { mutableStateOf("") }
-    var origem by remember { mutableStateOf("") }
-    var reputacao by remember { mutableStateOf("") }
     var aparencia by remember { mutableStateOf("") }
     var personalidade by remember { mutableStateOf("") }
     var historia by remember { mutableStateOf("") }
     var anotacoes by remember { mutableStateOf("") }
-    var showSaveConfirmation by remember { mutableStateOf(false) }
+    var showSavedMessage by remember { mutableStateOf(false) }
 
     LaunchedEffect(ficha) {
         ficha?.let {
             nome = it.nome
             jogador = it.jogador
-            arquetipo = it.arquetipo
-            origem = it.origem
-            reputacao = it.reputacao
             aparencia = it.aparencia
             personalidade = it.personalidade
             historia = it.historia
@@ -44,224 +39,116 @@ fun DescricaoVelhoOesteScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            "▸ DESCRIÇÃO DO PERSONAGEM",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+    // Salvamento automático
+    LaunchedEffect(nome, jogador, aparencia, personalidade, historia, anotacoes) {
+        delay(1000)
+        viewModel.salvarDescricao(
+            nome, jogador, "", "", "", // arquetipo, origem, reputacao vazios
+            aparencia, personalidade, historia, anotacoes
         )
-
-        // Informações Básicas
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "INFORMAÇÕES BÁSICAS",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = nome,
-                    onValueChange = { nome = it },
-                    label = { Text("Nome") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = jogador,
-                    onValueChange = { jogador = it },
-                    label = { Text("Nome do Jogador") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = arquetipo,
-                        onValueChange = { arquetipo = it },
-                        label = { Text("Arquétipo") },
-                        placeholder = { Text("Ex: Pistoleiro") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = origem,
-                        onValueChange = { origem = it },
-                        label = { Text("Origem") },
-                        placeholder = { Text("Ex: Texas") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = reputacao,
-                    onValueChange = { reputacao = it },
-                    label = { Text("Reputação") },
-                    placeholder = { Text("Ex: Herói, Neutro, Bandido") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        // Aparência
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "APARÊNCIA",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = aparencia,
-                    onValueChange = { aparencia = it },
-                    placeholder = { Text("Descreva a aparência...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    maxLines = 5
-                )
-            }
-        }
-
-        // Personalidade
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "PERSONALIDADE",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = personalidade,
-                    onValueChange = { personalidade = it },
-                    placeholder = { Text("Descreva a personalidade...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    maxLines = 5
-                )
-            }
-        }
-
-        // História
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "HISTÓRIA",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = historia,
-                    onValueChange = { historia = it },
-                    placeholder = { Text("Conte o passado...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp),
-                    maxLines = 7
-                )
-            }
-        }
-
-        // Anotações
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "ANOTAÇÕES",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = anotacoes,
-                    onValueChange = { anotacoes = it },
-                    placeholder = { Text("Anotações gerais...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp),
-                    maxLines = 7
-                )
-            }
-        }
-
-        // Botão salvar
-        Button(
-            onClick = {
-                viewModel.salvarDescricao(
-                    nome, jogador, arquetipo, origem, reputacao,
-                    aparencia, personalidade, historia, anotacoes
-                )
-                showSaveConfirmation = true
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("💾 SALVAR DESCRIÇÃO", fontWeight = FontWeight.Bold)
-        }
+        showSavedMessage = true
+        delay(2000)
+        showSavedMessage = false
     }
 
-    if (showSaveConfirmation) {
-        LaunchedEffect(Unit) {
-            delay(2000)
-            showSaveConfirmation = false
-        }
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.BottomCenter
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Snackbar {
-                Text("✓ Descrição salva!")
+            Text(
+                "▸ DESCRIÇÃO",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Nome
+            OutlinedTextField(
+                value = nome,
+                onValueChange = { nome = it },
+                label = { Text("Nome") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Jogador
+            OutlinedTextField(
+                value = jogador,
+                onValueChange = { jogador = it },
+                label = { Text("Jogador") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Aparência
+            OutlinedTextField(
+                value = aparencia,
+                onValueChange = { aparencia = it },
+                label = { Text("Aparência") },
+                placeholder = { Text("Descreva a aparência...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+
+            // Personalidade
+            OutlinedTextField(
+                value = personalidade,
+                onValueChange = { personalidade = it },
+                label = { Text("Personalidade") },
+                placeholder = { Text("Descreva a personalidade...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+
+            // História
+            OutlinedTextField(
+                value = historia,
+                onValueChange = { historia = it },
+                label = { Text("História") },
+                placeholder = { Text("Conte a história do personagem...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 4
+            )
+
+            // Anotações
+            OutlinedTextField(
+                value = anotacoes,
+                onValueChange = { anotacoes = it },
+                label = { Text("Anotações") },
+                placeholder = { Text("Anotações gerais...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        // Notificação de salvamento
+        AnimatedVisibility(
+            visible = showSavedMessage,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Text(
+                    "✓ Salvo automaticamente",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
         }
     }

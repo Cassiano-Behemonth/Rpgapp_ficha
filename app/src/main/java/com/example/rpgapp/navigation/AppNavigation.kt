@@ -35,9 +35,10 @@ fun AppNavigation(
     )
 
     // Define a rota inicial baseada no modo selecionado
-    val startDestination = when {
-        currentMode == null -> "theme_selector"
-        else -> "game_mode_selector"
+    val startDestination = when (currentMode) {
+        GameMode.INVESTIGACAO_HORROR -> "ficha_horror"
+        GameMode.VELHO_OESTE -> "ficha_oeste"
+        null -> "theme_selector"
     }
 
     NavHost(navController = nav, startDestination = startDestination) {
@@ -76,7 +77,14 @@ fun AppNavigation(
                 currentMode = currentMode,
                 onModeSelected = { mode ->
                     onModeChange(mode)
-                    when (mode) {
+                    // Aguarda o estado ser atualizado antes de navegar
+                }
+            )
+
+            // LaunchedEffect para navegar após modo ser selecionado
+            LaunchedEffect(currentMode) {
+                if (currentMode != null) {
+                    when (currentMode) {
                         GameMode.INVESTIGACAO_HORROR -> {
                             nav.navigate("ficha_horror") {
                                 popUpTo("game_mode_selector") { inclusive = true }
@@ -89,7 +97,7 @@ fun AppNavigation(
                         }
                     }
                 }
-            )
+            }
         }
 
         // Ficha Investigação Horror

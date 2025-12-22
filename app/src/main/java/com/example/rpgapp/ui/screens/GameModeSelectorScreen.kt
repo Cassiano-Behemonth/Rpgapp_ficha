@@ -77,13 +77,13 @@ fun GameModeSelectorScreen(
 
         // Card Velho Oeste
         GameModeCard(
-            title = "🤠 VELHO OESTE",
+            title = "💀 VELHO OESTE",
             description = "Aventuras no coração do velho oeste americano",
             features = listOf(
-                "Atributos: PON, VIG, ESP, CAR, REF",
-                "Sistema de reputação",
-                "Gestão de munição",
-                "Duelos e tiroteios"
+                "Atributos: Físico, Velocidade, Intelecto, Coragem, Defesa",
+                "Sistema de Dor e Selo da Morte",
+                "Antecedentes personalizados",
+                "Habilidades e equipamentos"
             ),
             gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF4D2600)),
             accentColor = Color(0xFFD2691E),

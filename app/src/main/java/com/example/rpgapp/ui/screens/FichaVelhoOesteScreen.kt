@@ -1,13 +1,19 @@
 package com.example.rpgapp.ui.screens.velhooeste
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,42 +31,49 @@ fun FichaVelhoOesteScreen(
     val ficha by viewModel.ficha.collectAsState()
 
     var nome by remember { mutableStateOf("") }
-    var pontaria by remember { mutableStateOf("") }
-    var vigor by remember { mutableStateOf("") }
-    var esperteza by remember { mutableStateOf("") }
-    var carisma by remember { mutableStateOf("") }
-    var reflexos by remember { mutableStateOf("") }
-    var vidaAtual by remember { mutableStateOf("") }
-    var vidaMax by remember { mutableStateOf("") }
-    var municao by remember { mutableStateOf("") }
-    var dinheiro by remember { mutableStateOf("0") }
+    var fisico by remember { mutableStateOf("") }
+    var velocidade by remember { mutableStateOf("") }
+    var intelecto by remember { mutableStateOf("") }
+    var coragem by remember { mutableStateOf("") }
+    var defesa by remember { mutableStateOf("") }
+    var dinheiro by remember { mutableStateOf("") }
+    var vidaAtual by remember { mutableStateOf(6) }
+    var dorAtual by remember { mutableStateOf(0) }
 
     LaunchedEffect(ficha) {
         ficha?.let {
             nome = it.nome
-            pontaria = it.pontaria.toString()
-            vigor = it.vigor.toString()
-            esperteza = it.esperteza.toString()
-            carisma = it.carisma.toString()
-            reflexos = it.reflexos.toString()
-            vidaAtual = it.vidaAtual.toString()
-            vidaMax = it.vidaMax.toString()
-            municao = it.municao.toString()
+            fisico = it.fisico.toString()
+            velocidade = it.velocidade.toString()
+            intelecto = it.intelecto.toString()
+            coragem = it.coragem.toString()
+            defesa = it.defesa.toString()
             dinheiro = it.dinheiro
+            vidaAtual = it.vidaAtual
+            dorAtual = it.dorAtual
         }
     }
 
     // Salvamento automático
-    LaunchedEffect(nome, pontaria, vigor, esperteza, carisma, reflexos, vidaAtual, vidaMax, municao, dinheiro) {
+    LaunchedEffect(nome, fisico, velocidade, intelecto, coragem, defesa, dinheiro, vidaAtual, dorAtual) {
         delay(1000)
         viewModel.salvarFichaCompleta(
-            nome, pontaria, vigor, esperteza, carisma, reflexos,
-            vidaAtual, vidaMax, municao, dinheiro
+            nome, fisico, velocidade, intelecto, coragem, defesa, dinheiro, vidaAtual, dorAtual
         )
     }
 
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Ficha", "Perícias", "Equipamento", "Descrição")
+    val tabs = listOf("Ficha", "Antecedentes", "Habilidades", "Equipamento", "Descrição")
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
+
+    // Sincronizar tab selecionada com pager
+    LaunchedEffect(selectedTab) {
+        pagerState.animateScrollToPage(selectedTab)
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTab = pagerState.currentPage
+    }
 
     Column(
         modifier = Modifier
@@ -89,34 +102,45 @@ fun FichaVelhoOesteScreen(
             }
         }
 
-        when (selectedTab) {
-            0 -> FichaVelhoOesteTab(
-                nome = nome,
-                pontaria = pontaria,
-                vigor = vigor,
-                esperteza = esperteza,
-                carisma = carisma,
-                reflexos = reflexos,
-                vidaAtual = vidaAtual,
-                vidaMax = vidaMax,
-                municao = municao,
-                dinheiro = dinheiro,
-                onNomeChange = { nome = it },
-                onPontariaChange = { pontaria = it },
-                onVigorChange = { vigor = it },
-                onEspertezaChange = { esperteza = it },
-                onCarismaChange = { carisma = it },
-                onReflexosChange = { reflexos = it },
-                onVidaAtualChange = { vidaAtual = it },
-                onVidaMaxChange = { vidaMax = it },
-                onMunicaoChange = { municao = it },
-                onDinheiroChange = { dinheiro = it },
-                onThemeChange = onThemeChange,
-                onModeChange = onModeChange
-            )
-            1 -> PericiasVelhoOesteScreen(viewModel = viewModel)
-            2 -> EquipamentoVelhoOesteScreen(viewModel = viewModel)
-            3 -> DescricaoVelhoOesteScreen(viewModel = viewModel)
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                0 -> FichaVelhoOesteTab(
+                    nome = nome,
+                    fisico = fisico,
+                    velocidade = velocidade,
+                    intelecto = intelecto,
+                    coragem = coragem,
+                    defesa = defesa,
+                    dinheiro = dinheiro,
+                    vidaAtual = vidaAtual,
+                    vidaMaxima = ficha?.vidaMaxima ?: 6,
+                    dorAtual = dorAtual,
+                    onNomeChange = { nome = it },
+                    onFisicoChange = { fisico = it },
+                    onVelocidadeChange = { velocidade = it },
+                    onIntelectoChange = { intelecto = it },
+                    onCoragemChange = { coragem = it },
+                    onDefesaChange = { defesa = it },
+                    onDinheiroChange = { dinheiro = it },
+                    onVidaAtualChange = {
+                        vidaAtual = it
+                        viewModel.atualizarVida(it)
+                    },
+                    onDorAtualChange = {
+                        dorAtual = it
+                        viewModel.atualizarDor(it)
+                    },
+                    onThemeChange = onThemeChange,
+                    onModeChange = onModeChange
+                )
+                1 -> AntecedentesVelhoOesteScreen(viewModel = viewModel)
+                2 -> HabilidadesVelhoOesteScreen(viewModel = viewModel)
+                3 -> EquipamentoVelhoOesteScreen(viewModel = viewModel)
+                4 -> DescricaoVelhoOesteScreen(viewModel = viewModel)
+            }
         }
     }
 }
@@ -124,25 +148,24 @@ fun FichaVelhoOesteScreen(
 @Composable
 fun FichaVelhoOesteTab(
     nome: String,
-    pontaria: String,
-    vigor: String,
-    esperteza: String,
-    carisma: String,
-    reflexos: String,
-    vidaAtual: String,
-    vidaMax: String,
-    municao: String,
+    fisico: String,
+    velocidade: String,
+    intelecto: String,
+    coragem: String,
+    defesa: String,
     dinheiro: String,
+    vidaAtual: Int,
+    vidaMaxima: Int,
+    dorAtual: Int,
     onNomeChange: (String) -> Unit,
-    onPontariaChange: (String) -> Unit,
-    onVigorChange: (String) -> Unit,
-    onEspertezaChange: (String) -> Unit,
-    onCarismaChange: (String) -> Unit,
-    onReflexosChange: (String) -> Unit,
-    onVidaAtualChange: (String) -> Unit,
-    onVidaMaxChange: (String) -> Unit,
-    onMunicaoChange: (String) -> Unit,
+    onFisicoChange: (String) -> Unit,
+    onVelocidadeChange: (String) -> Unit,
+    onIntelectoChange: (String) -> Unit,
+    onCoragemChange: (String) -> Unit,
+    onDefesaChange: (String) -> Unit,
     onDinheiroChange: (String) -> Unit,
+    onVidaAtualChange: (Int) -> Unit,
+    onDorAtualChange: (Int) -> Unit,
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {
@@ -167,7 +190,7 @@ fun FichaVelhoOesteTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "▸ NOME DO PISTOLEIRO",
+                    "▸ NOME DO PERSONAGEM",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -178,7 +201,19 @@ fun FichaVelhoOesteTab(
                     onValueChange = onNomeChange,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    placeholder = { Text("Ex: John 'Relâmpago' Smith") }
+                    placeholder = { Text("Digite o nome") }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Campo de Dinheiro
+                OutlinedTextField(
+                    value = dinheiro,
+                    onValueChange = onDinheiroChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("💰 Dinheiro") },
+                    placeholder = { Text("Ex: 100 moedas") }
                 )
             }
         }
@@ -203,23 +238,28 @@ fun FichaVelhoOesteTab(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AtributoCompactoOeste("PONTARIA", pontaria, onPontariaChange, Modifier.weight(1f))
-                    AtributoCompactoOeste("VIGOR", vigor, onVigorChange, Modifier.weight(1f))
+                    AtributoCompactoOeste("FÍSICO", fisico, onFisicoChange, Modifier.weight(1f))
+                    AtributoCompactoOeste("VELOCIDADE", velocidade, onVelocidadeChange, Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AtributoCompactoOeste("ESPERTEZA", esperteza, onEspertezaChange, Modifier.weight(1f))
-                    AtributoCompactoOeste("CARISMA", carisma, onCarismaChange, Modifier.weight(1f))
+                    AtributoCompactoOeste("INTELECTO", intelecto, onIntelectoChange, Modifier.weight(1f))
+                    AtributoCompactoOeste("CORAGEM", coragem, onCoragemChange, Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                AtributoCompactoOeste("REFLEXOS", reflexos, onReflexosChange, Modifier.fillMaxWidth())
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AtributoCompactoOeste("DEFESA", defesa, onDefesaChange, Modifier.weight(1f))
+                }
             }
         }
 
-        // Recursos
+        // Sistema de Dor (6 pontos fixos) - AGORA PRIMEIRO
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -227,39 +267,86 @@ fun FichaVelhoOesteTab(
             )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "▸ RECURSOS",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    RecursoField("Vida Atual", vidaAtual, onVidaAtualChange, Modifier.weight(1f))
-                    RecursoField("Vida Máx", vidaMax, onVidaMaxChange, Modifier.weight(1f))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    RecursoField("Munição", municao, onMunicaoChange, Modifier.weight(1f))
-                    OutlinedTextField(
-                        value = dinheiro,
-                        onValueChange = onDinheiroChange,
-                        label = { Text("Dinheiro ($)", fontSize = 12.sp) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    Text(
+                        "▸ DOR",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "$dorAtual / 6",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    "6 pontos fixos de dor",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Círculos de Dor (agora com cor do tema)
+                PainCircles(
+                    currentPain = dorAtual,
+                    onPainChange = onDorAtualChange
+                )
+            }
+        }
+
+        // Sistema de Selo da Morte (antes era "Vida") - AGORA SEGUNDO
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "▸ SELO DA MORTE",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "$vidaAtual / $vidaMaxima",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    "Base: 6 + Físico ($fisico) = $vidaMaxima",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Círculos de Selo da Morte
+                HealthCircles(
+                    currentHealth = vidaAtual,
+                    maxHealth = vidaMaxima,
+                    onHealthChange = onVidaAtualChange
+                )
             }
         }
 
@@ -283,7 +370,7 @@ fun FichaVelhoOesteTab(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    listOf(6, 8, 10, 12, 20).forEach { faces ->
+                    listOf(4, 6, 8, 10, 12, 20).forEach { faces ->
                         Button(
                             onClick = {
                                 diceResult = (1..faces).random()
@@ -339,6 +426,135 @@ fun FichaVelhoOesteTab(
             faces = 20,
             onDismiss = { showDiceAnimation = false }
         )
+    }
+}
+
+@Composable
+fun HealthCircles(
+    currentHealth: Int,
+    maxHealth: Int,
+    onHealthChange: (Int) -> Unit
+) {
+    // Organiza círculos em linhas de 6
+    val rows = (maxHealth + 5) / 6
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        repeat(rows) { rowIndex ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val startIndex = rowIndex * 6
+                val endIndex = minOf(startIndex + 6, maxHealth)
+
+                for (i in startIndex until endIndex) {
+                    val circleNumber = i + 1
+                    val isFilled = circleNumber <= currentHealth
+
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isFilled)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surface
+                            )
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                // Toggle: se clicar no círculo, ajusta a vida
+                                onHealthChange(
+                                    if (isFilled && circleNumber == currentHealth) {
+                                        // Se é o último preenchido, remove 1
+                                        currentHealth - 1
+                                    } else {
+                                        // Senão, preenche até aqui
+                                        circleNumber
+                                    }
+                                )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Mostra número se não estiver preenchido
+                        if (!isFilled) {
+                            Text(
+                                text = circleNumber.toString(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Preenche espaços vazios na linha
+                repeat(6 - (endIndex - startIndex)) {
+                    Spacer(modifier = Modifier.size(40.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PainCircles(
+    currentPain: Int,
+    onPainChange: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        for (i in 1..6) {
+            val isFilled = i <= currentPain
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isFilled)
+                            MaterialTheme.colorScheme.primary // Agora usa cor do tema
+                        else
+                            MaterialTheme.colorScheme.surface
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary, // Agora usa cor do tema
+                        shape = CircleShape
+                    )
+                    .clickable {
+                        // Toggle: se clicar no círculo, ajusta a dor
+                        onPainChange(
+                            if (isFilled && i == currentPain) {
+                                // Se é o último preenchido, remove 1
+                                currentPain - 1
+                            } else {
+                                // Senão, preenche até aqui
+                                i
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                // Mostra número se não estiver preenchido
+                if (!isFilled) {
+                    Text(
+                        text = i.toString(),
+                        color = MaterialTheme.colorScheme.primary, // Agora usa cor do tema
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }
 
