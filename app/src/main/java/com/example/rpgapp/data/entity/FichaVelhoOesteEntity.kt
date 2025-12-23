@@ -16,7 +16,7 @@ data class FichaVelhoOesteEntity(
     val defesa: Int = 0,
 
     // Sistema de vida (círculos preenchidos)
-    val vidaAtual: Int = 6, // Quantidade de círculos preenchidos
+    val vidaAtual: Int = 0, // Quantidade de círculos preenchidos (começa vazio)
 
     // Sistema de dor (0-6 pontos fixos)
     val dorAtual: Int = 0, // Quantidade de pontos de dor marcados

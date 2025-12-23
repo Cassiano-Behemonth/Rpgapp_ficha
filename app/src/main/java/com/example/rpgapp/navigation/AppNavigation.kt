@@ -34,11 +34,13 @@ fun AppNavigation(
         )
     )
 
-    // Define a rota inicial baseada no modo selecionado
-    val startDestination = when (currentMode) {
-        GameMode.INVESTIGACAO_HORROR -> "ficha_horror"
-        GameMode.VELHO_OESTE -> "ficha_oeste"
-        null -> "theme_selector"
+    // Define a rota inicial baseada no modo selecionado (só na primeira composição)
+    val startDestination = remember {
+        when (currentMode) {
+            GameMode.INVESTIGACAO_HORROR -> "ficha_horror"
+            GameMode.VELHO_OESTE -> "ficha_oeste"
+            null -> "theme_selector"
+        }
     }
 
     NavHost(navController = nav, startDestination = startDestination) {
@@ -73,17 +75,21 @@ fun AppNavigation(
 
         // Tela de seleção de modo de jogo
         composable("game_mode_selector") {
+            var previousMode by remember { mutableStateOf(currentMode) }
+
             GameModeSelectorScreen(
                 currentMode = currentMode,
                 onModeSelected = { mode ->
-                    onModeChange(mode)
+                    onModeChange(mode) // Define o novo modo
                     // Aguarda o estado ser atualizado antes de navegar
                 }
             )
 
             // LaunchedEffect para navegar após modo ser selecionado
+            // Só navega se o modo MUDOU (não se já estava definido)
             LaunchedEffect(currentMode) {
-                if (currentMode != null) {
+                if (currentMode != null && currentMode != previousMode) {
+                    previousMode = currentMode
                     when (currentMode) {
                         GameMode.INVESTIGACAO_HORROR -> {
                             nav.navigate("ficha_horror") {
@@ -109,7 +115,11 @@ fun AppNavigation(
                 onPericias = {},
                 viewModel = viewModelHorror,
                 onThemeChange = { nav.navigate("theme_selector") },
-                onModeChange = { nav.navigate("game_mode_selector") }
+                onModeChange = {
+                    nav.navigate("game_mode_selector") {
+                        popUpTo("ficha_horror") { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -118,7 +128,11 @@ fun AppNavigation(
             FichaVelhoOesteScreen(
                 viewModel = viewModelOeste,
                 onThemeChange = { nav.navigate("theme_selector") },
-                onModeChange = { nav.navigate("game_mode_selector") }
+                onModeChange = {
+                    nav.navigate("game_mode_selector") {
+                        popUpTo("ficha_oeste") { inclusive = true }
+                    }
+                }
             )
         }
     }

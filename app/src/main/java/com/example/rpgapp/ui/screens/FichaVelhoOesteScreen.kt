@@ -1,5 +1,6 @@
 package com.example.rpgapp.ui.screens.velhooeste
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,13 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import com.example.rpgapp.ui.screens.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun FichaVelhoOesteScreen(
@@ -37,7 +43,7 @@ fun FichaVelhoOesteScreen(
     var coragem by remember { mutableStateOf("") }
     var defesa by remember { mutableStateOf("") }
     var dinheiro by remember { mutableStateOf("") }
-    var vidaAtual by remember { mutableStateOf(6) }
+    var vidaAtual by remember { mutableStateOf(0) }
     var dorAtual by remember { mutableStateOf(0) }
 
     LaunchedEffect(ficha) {
@@ -288,14 +294,6 @@ fun FichaVelhoOesteTab(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    "6 pontos fixos de dor",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // Círculos de Dor (agora com cor do tema)
                 PainCircles(
                     currentPain = dorAtual,
@@ -333,14 +331,6 @@ fun FichaVelhoOesteTab(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    "Base: 6 + Físico ($fisico) = $vidaMaxima",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // Círculos de Selo da Morte
                 HealthCircles(
                     currentHealth = vidaAtual,
@@ -350,7 +340,7 @@ fun FichaVelhoOesteTab(
             }
         }
 
-        // Rolagem de Dados
+        // Tambor de Revólver (1d6)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -359,30 +349,24 @@ fun FichaVelhoOesteTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "▸ DADOS DO DESTINO",
+                    "▸ 🔫 TAMBOR DE REVÓLVER",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
+                // Botão único 1d6
+                Button(
+                    onClick = {
+                        diceResult = (1..6).random()
+                        showDiceAnimation = true
+                        historicoRolagens = listOf("1d6 = $diceResult") + historicoRolagens.take(4)
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(16.dp)
                 ) {
-                    listOf(4, 6, 8, 10, 12, 20).forEach { faces ->
-                        Button(
-                            onClick = {
-                                diceResult = (1..faces).random()
-                                showDiceAnimation = true
-                                historicoRolagens = listOf("d$faces = $diceResult") + historicoRolagens.take(4)
-                            },
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(4.dp)
-                        ) {
-                            Text("d$faces", fontSize = 12.sp)
-                        }
-                    }
+                    Text("🎲 ROLAR 1d6", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
 
                 if (historicoRolagens.isNotEmpty()) {
@@ -421,11 +405,111 @@ fun FichaVelhoOesteTab(
     }
 
     if (showDiceAnimation) {
-        DiceRollAnimation(
+        RevolverCylinderAnimation(
             result = diceResult,
-            faces = 20,
             onDismiss = { showDiceAnimation = false }
         )
+    }
+}
+
+@Composable
+fun RevolverCylinderAnimation(
+    result: Int,
+    onDismiss: () -> Unit
+) {
+    var isSpinning by remember { mutableStateOf(true) }
+    var rotation by remember { mutableStateOf(0f) }
+
+    LaunchedEffect(Unit) {
+        // Gira o tambor
+        while (isSpinning) {
+            rotation += 30f
+            delay(50)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        delay(1500)
+        isSpinning = false
+        delay(800)
+        onDismiss()
+    }
+
+    Dialog(onDismissRequest = {}) {
+        Card(
+            modifier = Modifier.size(250.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSpinning) {
+                    // Tambor girando
+                    Canvas(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .graphicsLayer { rotationZ = rotation }
+                    ) {
+                        val radius = size.minDimension / 2
+                        val center = Offset(size.width / 2, size.height / 2)
+
+                        // Desenha o tambor (círculo externo)
+                        drawCircle(
+                            color = Color.Black,
+                            radius = radius,
+                            center = center
+                        )
+
+                        // Desenha os 6 furos do tambor
+                        for (i in 0 until 6) {
+                            val angle = (i * 60f - 90f) * (Math.PI / 180f).toFloat()
+                            val holeRadius = radius * 0.6f
+                            val x = center.x + holeRadius * cos(angle)
+                            val y = center.y + holeRadius * sin(angle)
+
+                            drawCircle(
+                                color = Color.White,
+                                radius = radius * 0.15f,
+                                center = Offset(x, y)
+                            )
+                        }
+
+                        // Desenha o centro do tambor
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.3f),
+                            radius = radius * 0.2f,
+                            center = center
+                        )
+                    }
+                } else {
+                    // Mostra o resultado
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "💥",
+                            fontSize = 60.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = result.toString(),
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "1d6",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -482,13 +566,11 @@ fun HealthCircles(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Mostra número se não estiver preenchido
-                        if (!isFilled) {
+                        if (isFilled) {
+                            // Mostra emoji de caveira quando preenchido
                             Text(
-                                text = circleNumber.toString(),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "💀",
+                                fontSize = 20.sp
                             )
                         }
                     }
@@ -544,13 +626,11 @@ fun PainCircles(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Mostra número se não estiver preenchido
-                if (!isFilled) {
+                if (isFilled) {
+                    // Mostra emoji de punho quando preenchido
                     Text(
-                        text = i.toString(),
-                        color = MaterialTheme.colorScheme.primary, // Agora usa cor do tema
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "👊",
+                        fontSize = 20.sp
                     )
                 }
             }
