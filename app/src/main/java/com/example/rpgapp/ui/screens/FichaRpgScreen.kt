@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -69,6 +71,16 @@ fun FichaRpgScreen(
 
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Ficha", "Perícias", "Inventário", "Descrição")
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
+
+    // Sincronizar tab selecionada com pager
+    LaunchedEffect(selectedTab) {
+        pagerState.animateScrollToPage(selectedTab)
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTab = pagerState.currentPage
+    }
 
     Column(
         modifier = Modifier
@@ -78,7 +90,7 @@ fun FichaRpgScreen(
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
             edgePadding = 0.dp,
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.primary
         ) {
             tabs.forEachIndexed { index, title ->
@@ -97,41 +109,46 @@ fun FichaRpgScreen(
             }
         }
 
-        when (selectedTab) {
-            0 -> FichaTab(
-                nome = nome,
-                forca = forca,
-                agilidade = agilidade,
-                presenca = presenca,
-                nex = nex,
-                vidaAtual = vidaAtual,
-                vidaMax = vidaMax,
-                sanidadeAtual = sanidadeAtual,
-                sanidadeMax = sanidadeMax,
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                0 -> FichaTab(
+                    nome = nome,
+                    forca = forca,
+                    agilidade = agilidade,
+                    presenca = presenca,
+                    nex = nex,
+                    vidaAtual = vidaAtual,
+                    vidaMax = vidaMax,
+                    sanidadeAtual = sanidadeAtual,
+                    sanidadeMax = sanidadeMax,
 
-                onNomeChange = { nome = it },
-                onForcaChange = { forca = it },
-                onAgilidadeChange = { agilidade = it },
-                onPresencaChange = { presenca = it },
-                onNexChange = { nex = it },
-                onVidaAtualChange = { vidaAtual = it },
-                onVidaMaxChange = { vidaMax = it },
-                onSanidadeAtualChange = { sanidadeAtual = it },
-                onSanidadeMaxChange = { sanidadeMax = it },
+                    onNomeChange = { nome = it },
+                    onForcaChange = { forca = it },
+                    onAgilidadeChange = { agilidade = it },
+                    onPresencaChange = { presenca = it },
+                    onNexChange = { nex = it },
+                    onVidaAtualChange = { vidaAtual = it },
+                    onVidaMaxChange = { vidaMax = it },
+                    onSanidadeAtualChange = { sanidadeAtual = it },
+                    onSanidadeMaxChange = { sanidadeMax = it },
 
-                onSalvar = {
-                    viewModel.salvarFicha(
-                        forca, agilidade, presenca, nex,
-                        vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
-                    )
-                },
+                    onSalvar = {
+                        viewModel.salvarFicha(
+                            forca, agilidade, presenca, nex,
+                            vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
+                        )
+                    },
 
-                onThemeChange = onThemeChange,
-                onModeChange = onModeChange
-            )
-            1 -> PericiasScreen(onBack = {}, viewModel = viewModel)
-            2 -> InventarioScreen(onBack = {}, viewModel = viewModel)
-            3 -> DescricaoScreen(onBack = {}, viewModel = viewModel)
+                    onThemeChange = onThemeChange,
+                    onModeChange = onModeChange
+                )
+                1 -> PericiasScreen(onBack = {}, viewModel = viewModel)
+                2 -> InventarioScreen(onBack = {}, viewModel = viewModel)
+                3 -> DescricaoScreen(onBack = {}, viewModel = viewModel)
+            }
         }
     }
 }

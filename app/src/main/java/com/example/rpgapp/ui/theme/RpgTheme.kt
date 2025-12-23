@@ -63,6 +63,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = GreenBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = GreenBlack_Light,
+            surfaceContainer = GreenBlack_Surface,     // Para tabs
             error = Color(0xFFEF5350),
             outline = GreenBlack_Dark,
             inverseSurface = GreenBlack_Light,
@@ -82,6 +83,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = RedWhite_Primary,
             surfaceVariant = Color(0xFFF5F5F5),
             onSurfaceVariant = Color(0xFF424242),
+            surfaceContainer = RedWhite_Surface,      // Para tabs
             error = Color(0xFFB71C1C),
             outline = RedWhite_Dark,
             inverseSurface = RedWhite_Primary,
@@ -101,6 +103,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = GoldBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = GoldBlack_Light,
+            surfaceContainer = GoldBlack_Surface,     // Para tabs
             error = Color(0xFFFF6F00),
             outline = GoldBlack_Dark,
             inverseSurface = GoldBlack_Light,
@@ -120,6 +123,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = PurpleBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = PurpleBlack_Light,
+            surfaceContainer = PurpleBlack_Surface,   // Para tabs
             error = Color(0xFFE040FB),
             outline = PurpleBlack_Dark,
             inverseSurface = PurpleBlack_Light,
@@ -139,6 +143,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = BlueWhite_Primary,
             surfaceVariant = Color(0xFFF5F5F5),
             onSurfaceVariant = Color(0xFF424242),
+            surfaceContainer = BlueWhite_Surface,     // Para tabs
             error = Color(0xFFD32F2F),
             outline = BlueWhite_Dark,
             inverseSurface = BlueWhite_Primary,
@@ -158,6 +163,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = WildWest_Primary,            // Laranja queimado
             surfaceVariant = Color(0xFFFFE4B5),      // Bege médio
             onSurfaceVariant = Color(0xFF3E2723),    // Marrom escuro
+            surfaceContainer = Color(0xFFFFE4B5),    // MESMA COR DOS CARDS (bege médio)
             error = Color(0xFFD32F2F),
             outline = Color(0xFFCD853F),             // Bronze
             inverseSurface = WildWest_Primary,

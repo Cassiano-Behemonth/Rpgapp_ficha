@@ -35,7 +35,7 @@ fun GameModeSelectorScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            "🎲 RPG COMPANION 🎲",
+            "🎲 RPG records ",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFF4CAF50),
@@ -57,7 +57,7 @@ fun GameModeSelectorScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(9.dp))
 
         // Card Investigação Horror
         GameModeCard(

@@ -75,22 +75,12 @@ fun AppNavigation(
 
         // Tela de seleção de modo de jogo
         composable("game_mode_selector") {
-            var previousMode by remember { mutableStateOf(currentMode) }
-
             GameModeSelectorScreen(
                 currentMode = currentMode,
                 onModeSelected = { mode ->
                     onModeChange(mode) // Define o novo modo
-                    // Aguarda o estado ser atualizado antes de navegar
-                }
-            )
-
-            // LaunchedEffect para navegar após modo ser selecionado
-            // Só navega se o modo MUDOU (não se já estava definido)
-            LaunchedEffect(currentMode) {
-                if (currentMode != null && currentMode != previousMode) {
-                    previousMode = currentMode
-                    when (currentMode) {
+                    // Navega para a ficha do modo selecionado
+                    when (mode) {
                         GameMode.INVESTIGACAO_HORROR -> {
                             nav.navigate("ficha_horror") {
                                 popUpTo("game_mode_selector") { inclusive = true }
@@ -103,7 +93,7 @@ fun AppNavigation(
                         }
                     }
                 }
-            }
+            )
         }
 
         // Ficha Investigação Horror

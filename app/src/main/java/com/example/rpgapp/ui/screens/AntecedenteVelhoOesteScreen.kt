@@ -93,7 +93,7 @@ fun AntecedentesVelhoOesteScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant  // Mesma cor dos outros cards
                 )
             ) {
                 Column(
@@ -150,7 +150,7 @@ fun AntecedenteCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceVariant  // Mesma cor dos outros cards
         )
     ) {
         Row(
