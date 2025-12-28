@@ -11,5 +11,20 @@ data class ItemVelhoOesteEntity(
     val nome: String,
     val tipo: String = "Item", // Arma, Item, Equipamento, Cavalo, etc.
     val quantidade: String = "1",
-    val descricao: String = ""
-)
+
+    // Campo de peso em kg
+    val peso: Int = 1, // Peso unitário em kg
+
+    val descricao: String = "",
+
+    // Campo de combate
+    val dano: String = ""  // Ex: "1d6", "2d8+3", "1d10"
+) {
+    /**
+     * Calcula peso total (quantidade × peso unitário)
+     */
+    fun pesoTotal(): Int {
+        val qtd = quantidade.toIntOrNull() ?: 1
+        return qtd * peso
+    }
+}

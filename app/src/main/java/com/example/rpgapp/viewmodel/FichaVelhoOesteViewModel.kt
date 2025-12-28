@@ -51,7 +51,6 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
                 if (fichaAtual != null) {
                     _fichaId.value = fichaAtual.id
                 } else {
-                    // Cria ficha inicial
                     val novaFichaId = fichaDao.insertFicha(FichaVelhoOesteEntity())
                     _fichaId.value = novaFichaId
                 }
@@ -122,6 +121,20 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
         viewModelScope.launch {
             val fichaAtual = ficha.value ?: return@launch
             fichaDao.updateFicha(fichaAtual.copy(dorAtual = dorAtual))
+        }
+    }
+
+    fun atualizarSelosBonus(bonus: Int) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: return@launch
+            fichaDao.updateFicha(fichaAtual.copy(selosMorteBonus = bonus))
+        }
+    }
+
+    fun atualizarPesoBonus(bonus: Int) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: return@launch
+            fichaDao.updateFicha(fichaAtual.copy(pesoBonus = bonus))
         }
     }
 
@@ -203,7 +216,17 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    fun adicionarItem(nome: String, tipo: String, quantidade: String, descricao: String) {
+    /**
+     * Adiciona item com suporte a dano
+     */
+    fun adicionarItem(
+        nome: String,
+        tipo: String,
+        quantidade: String,
+        peso: Int,
+        descricao: String,
+        dano: String
+    ) {
         viewModelScope.launch {
             itemDao.insertItem(
                 ItemVelhoOesteEntity(
@@ -211,7 +234,9 @@ class FichaVelhoOesteViewModel(application: Application) : AndroidViewModel(appl
                     nome = nome,
                     tipo = tipo,
                     quantidade = quantidade,
-                    descricao = descricao
+                    peso = peso,
+                    descricao = descricao,
+                    dano = dano
                 )
             )
         }

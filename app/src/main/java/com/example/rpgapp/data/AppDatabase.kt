@@ -20,7 +20,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 intelecto INTEGER NOT NULL DEFAULT 0,
                 coragem INTEGER NOT NULL DEFAULT 0,
                 defesa INTEGER NOT NULL DEFAULT 0,
-                vidaAtual INTEGER NOT NULL DEFAULT 6,
+                vidaAtual INTEGER NOT NULL DEFAULT 0,
                 dorAtual INTEGER NOT NULL DEFAULT 0,
                 dinheiro TEXT NOT NULL DEFAULT '',
                 nome TEXT NOT NULL DEFAULT '',
@@ -70,6 +70,45 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+/**
+ * MIGRATION 2 -> 3
+ * Adiciona campos:
+ * - selosMorteBonus em fichas_velho_oeste
+ * - pesoBonus em fichas_velho_oeste
+ * - peso em itens_velho_oeste
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            ALTER TABLE fichas_velho_oeste 
+            ADD COLUMN selosMorteBonus INTEGER NOT NULL DEFAULT 0
+        """)
+
+        database.execSQL("""
+            ALTER TABLE fichas_velho_oeste 
+            ADD COLUMN pesoBonus INTEGER NOT NULL DEFAULT 0
+        """)
+
+        database.execSQL("""
+            ALTER TABLE itens_velho_oeste 
+            ADD COLUMN peso INTEGER NOT NULL DEFAULT 1
+        """)
+    }
+}
+
+/**
+ * MIGRATION 3 -> 4
+ * Adiciona campo de dano em itens_velho_oeste
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            ALTER TABLE itens_velho_oeste 
+            ADD COLUMN dano TEXT NOT NULL DEFAULT ''
+        """)
+    }
+}
+
 @Database(
     entities = [
         FichaEntity::class,
@@ -80,7 +119,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         HabilidadeVelhoOesteEntity::class,
         ItemVelhoOesteEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -103,7 +142,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "rpg_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

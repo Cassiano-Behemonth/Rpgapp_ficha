@@ -1,5 +1,7 @@
 package com.example.rpgapp.ui.screens.velhooeste
 
+import android.content.Context
+import android.media.MediaPlayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,7 +77,6 @@ fun FichaVelhoOesteScreen(
     val tabs = listOf("Ficha", "Antecedentes", "Habilidades", "Equipamento", "Descrição")
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
-    // Sincronizar tab selecionada com pager
     LaunchedEffect(selectedTab) {
         pagerState.animateScrollToPage(selectedTab)
     }
@@ -89,7 +93,7 @@ fun FichaVelhoOesteScreen(
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
             edgePadding = 0.dp,
-            containerColor = MaterialTheme.colorScheme.surfaceContainer, // Usa cor do tema
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.primary
         ) {
             tabs.forEachIndexed { index, title ->
@@ -124,6 +128,7 @@ fun FichaVelhoOesteScreen(
                     vidaAtual = vidaAtual,
                     vidaMaxima = ficha?.vidaMaxima ?: 6,
                     dorAtual = dorAtual,
+                    selosMorteBonus = ficha?.selosMorteBonus ?: 0,
                     onNomeChange = { nome = it },
                     onFisicoChange = { fisico = it },
                     onVelocidadeChange = { velocidade = it },
@@ -139,6 +144,8 @@ fun FichaVelhoOesteScreen(
                         dorAtual = it
                         viewModel.atualizarDor(it)
                     },
+                    onSelosBonusChange = { viewModel.atualizarSelosBonus(it) },
+                    viewModel = viewModel,
                     onThemeChange = onThemeChange,
                     onModeChange = onModeChange
                 )
@@ -163,6 +170,7 @@ fun FichaVelhoOesteTab(
     vidaAtual: Int,
     vidaMaxima: Int,
     dorAtual: Int,
+    selosMorteBonus: Int,
     onNomeChange: (String) -> Unit,
     onFisicoChange: (String) -> Unit,
     onVelocidadeChange: (String) -> Unit,
@@ -172,12 +180,20 @@ fun FichaVelhoOesteTab(
     onDinheiroChange: (String) -> Unit,
     onVidaAtualChange: (Int) -> Unit,
     onDorAtualChange: (Int) -> Unit,
+    onSelosBonusChange: (Int) -> Unit,
+    viewModel: com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel,
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {
     var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
+
+    // Dialog para adicionar selos de morte
+    var showSelosDialog by remember { mutableStateOf(false) }
+
+    // Context para tocar som
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -187,7 +203,7 @@ fun FichaVelhoOesteTab(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Nome
+        // Nome e Dinheiro
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -212,7 +228,7 @@ fun FichaVelhoOesteTab(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo de Dinheiro
+                // Dinheiro
                 OutlinedTextField(
                     value = dinheiro,
                     onValueChange = onDinheiroChange,
@@ -265,7 +281,7 @@ fun FichaVelhoOesteTab(
             }
         }
 
-        // Sistema de Dor (6 pontos fixos) - AGORA PRIMEIRO
+        // Sistema de Dor (6 pontos fixos)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -294,7 +310,6 @@ fun FichaVelhoOesteTab(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Círculos de Dor (agora com cor do tema)
                 PainCircles(
                     currentPain = dorAtual,
                     onPainChange = onDorAtualChange
@@ -302,7 +317,7 @@ fun FichaVelhoOesteTab(
             }
         }
 
-        // Sistema de Selo da Morte (antes era "Vida") - AGORA SEGUNDO
+        // Sistema de Selo da Morte com botão +
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -315,18 +330,31 @@ fun FichaVelhoOesteTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "▸ SELO DA MORTE",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        "$vidaAtual / $vidaMaxima",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Column {
+                        Text(
+                            "▸ SELO DA MORTE",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "$vidaAtual / $vidaMaxima (6 + Físico $fisico${if (selosMorteBonus > 0) " +$selosMorteBonus" else ""})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Botão + para adicionar selos
+                    IconButton(
+                        onClick = { showSelosDialog = true },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Adicionar selos",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -340,7 +368,7 @@ fun FichaVelhoOesteTab(
             }
         }
 
-        // Tambor de Revólver (1d6)
+        // Tambor de Revólver (1d6) com SOM
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -356,12 +384,15 @@ fun FichaVelhoOesteTab(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Botão único 1d6
+                // Botão com som de disparo
                 Button(
                     onClick = {
                         diceResult = (1..6).random()
                         showDiceAnimation = true
                         historicoRolagens = listOf("1d6 = $diceResult") + historicoRolagens.take(4)
+
+                        // Toca som de disparo
+                        playGunSound(context)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(16.dp)
@@ -410,6 +441,120 @@ fun FichaVelhoOesteTab(
             onDismiss = { showDiceAnimation = false }
         )
     }
+
+    // Dialog para adicionar selos de morte
+    if (showSelosDialog) {
+        SelosMorteDialog(
+            currentBonus = selosMorteBonus,
+            onDismiss = { showSelosDialog = false },
+            onConfirm = { novoBonus ->
+                onSelosBonusChange(novoBonus)
+                showSelosDialog = false
+            }
+        )
+    }
+}
+
+/**
+ * Função para tocar som de disparo
+ *
+ * IMPORTANTE: Você precisa adicionar o arquivo de som!
+ * Arquivo: gun_shot.mp3
+ * Local: res/raw/gun_shot.mp3
+ */
+private fun playGunSound(context: Context) {
+    try {
+        val mediaPlayer = MediaPlayer.create(context, context.resources.getIdentifier(
+            "gun_shot",  // Nome do arquivo (sem extensão)
+            "raw",       // Pasta res/raw/
+            context.packageName
+        ))
+
+        mediaPlayer?.apply {
+            setOnCompletionListener { mp ->
+                mp.release()  // Libera memória
+            }
+            start()  // Toca o som!
+        }
+    } catch (e: Exception) {
+        // Se não encontrar o som, não faz nada
+        e.printStackTrace()
+    }
+}
+
+/**
+ * Dialog para adicionar bônus aos selos de morte
+ */
+@Composable
+fun SelosMorteDialog(
+    currentBonus: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var bonus by remember { mutableStateOf(currentBonus.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "Bônus de Selos de Morte",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Adicione selos extras de habilidades, magias ou itens especiais.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                OutlinedTextField(
+                    value = bonus,
+                    onValueChange = {
+                        if (it.isEmpty() || it == "-") {
+                            bonus = it
+                        } else {
+                            val num = it.toIntOrNull()
+                            if (num != null && num >= 0 && num <= 20) {
+                                bonus = it
+                            }
+                        }
+                    },
+                    label = { Text("Bônus (selos)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("0") }
+                )
+
+                Text(
+                    "Total: 6 + Físico + $bonus = ${6 + (bonus.toIntOrNull() ?: 0)} selos",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(bonus.toIntOrNull() ?: 0)
+                }
+            ) {
+                Text(
+                    "Salvar",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }
 
 @Composable
@@ -421,7 +566,6 @@ fun RevolverCylinderAnimation(
     var rotation by remember { mutableStateOf(0f) }
 
     LaunchedEffect(Unit) {
-        // Gira o tambor
         while (isSpinning) {
             rotation += 30f
             delay(50)
@@ -447,7 +591,6 @@ fun RevolverCylinderAnimation(
                 contentAlignment = Alignment.Center
             ) {
                 if (isSpinning) {
-                    // Tambor girando
                     Canvas(
                         modifier = Modifier
                             .size(150.dp)
@@ -456,14 +599,12 @@ fun RevolverCylinderAnimation(
                         val radius = size.minDimension / 2
                         val center = Offset(size.width / 2, size.height / 2)
 
-                        // Desenha o tambor (círculo externo)
                         drawCircle(
                             color = Color.Black,
                             radius = radius,
                             center = center
                         )
 
-                        // Desenha os 6 furos do tambor
                         for (i in 0 until 6) {
                             val angle = (i * 60f - 90f) * (Math.PI / 180f).toFloat()
                             val holeRadius = radius * 0.6f
@@ -477,7 +618,6 @@ fun RevolverCylinderAnimation(
                             )
                         }
 
-                        // Desenha o centro do tambor
                         drawCircle(
                             color = Color.White.copy(alpha = 0.3f),
                             radius = radius * 0.2f,
@@ -485,7 +625,6 @@ fun RevolverCylinderAnimation(
                         )
                     }
                 } else {
-                    // Mostra o resultado
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -519,7 +658,6 @@ fun HealthCircles(
     maxHealth: Int,
     onHealthChange: (Int) -> Unit
 ) {
-    // Organiza círculos em linhas de 6
     val rows = (maxHealth + 5) / 6
 
     Column(
@@ -553,13 +691,10 @@ fun HealthCircles(
                                 shape = CircleShape
                             )
                             .clickable {
-                                // Toggle: se clicar no círculo, ajusta a vida
                                 onHealthChange(
                                     if (isFilled && circleNumber == currentHealth) {
-                                        // Se é o último preenchido, remove 1
                                         currentHealth - 1
                                     } else {
-                                        // Senão, preenche até aqui
                                         circleNumber
                                     }
                                 )
@@ -567,7 +702,6 @@ fun HealthCircles(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isFilled) {
-                            // Mostra emoji de caveira quando preenchido
                             Text(
                                 text = "💀",
                                 fontSize = 20.sp
@@ -576,7 +710,6 @@ fun HealthCircles(
                     }
                 }
 
-                // Preenche espaços vazios na linha
                 repeat(6 - (endIndex - startIndex)) {
                     Spacer(modifier = Modifier.size(40.dp))
                 }
@@ -603,23 +736,20 @@ fun PainCircles(
                     .clip(CircleShape)
                     .background(
                         if (isFilled)
-                            MaterialTheme.colorScheme.primary // Agora usa cor do tema
+                            MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.surface
                     )
                     .border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary, // Agora usa cor do tema
+                        color = MaterialTheme.colorScheme.primary,
                         shape = CircleShape
                     )
                     .clickable {
-                        // Toggle: se clicar no círculo, ajusta a dor
                         onPainChange(
                             if (isFilled && i == currentPain) {
-                                // Se é o último preenchido, remove 1
                                 currentPain - 1
                             } else {
-                                // Senão, preenche até aqui
                                 i
                             }
                         )
@@ -627,7 +757,6 @@ fun PainCircles(
                 contentAlignment = Alignment.Center
             ) {
                 if (isFilled) {
-                    // Mostra emoji de punho quando preenchido
                     Text(
                         text = "👊",
                         fontSize = 20.sp

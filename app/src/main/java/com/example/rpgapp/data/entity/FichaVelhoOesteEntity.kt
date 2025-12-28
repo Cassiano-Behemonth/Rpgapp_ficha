@@ -21,6 +21,12 @@ data class FichaVelhoOesteEntity(
     // Sistema de dor (0-6 pontos fixos)
     val dorAtual: Int = 0, // Quantidade de pontos de dor marcados
 
+    // NOVO: Bônus extra de selos de morte (adicionado manualmente)
+    val selosMorteBonus: Int = 0,
+
+    // NOVO: Bônus extra de peso (itens mágicos, etc)
+    val pesoBonus: Int = 0,
+
     // Dinheiro
     val dinheiro: String = "",
 
@@ -37,7 +43,27 @@ data class FichaVelhoOesteEntity(
     val historia: String = "",
     val anotacoes: String = ""
 ) {
-    // Vida máxima = 6 base + pontos em Físico
+    /**
+     * MUDANÇA: Vida máxima agora inclui bônus manual
+     *
+     * 6 base + Físico + Bônus manual
+     *
+     * Exemplo:
+     * - Físico 2, bônus 0 = 6 + 2 = 8 selos
+     * - Físico 2, bônus 3 = 6 + 2 + 3 = 11 selos
+     */
     val vidaMaxima: Int
-        get() = 6 + fisico
+        get() = 6 + fisico + selosMorteBonus
+
+    /**
+     * NOVO: Sistema de peso da mochila
+     *
+     * 15 kg base + Físico + Bônus extra
+     *
+     * Exemplo:
+     * - Físico 2, bônus 0 = 15 + 2 = 17 kg
+     * - Físico 2, bônus 5 = 15 + 2 + 5 = 22 kg
+     */
+    val pesoMaximo: Int
+        get() = 15 + fisico + pesoBonus
 }
