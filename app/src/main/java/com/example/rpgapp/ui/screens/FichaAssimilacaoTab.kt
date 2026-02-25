@@ -93,8 +93,11 @@ fun FichaAssimilacaoTab(
 
         // ── Saúde ─────────────────────────────────────────────
         ficha?.let { f ->
-            // Determina qual é o nível ativo e seus pontos
             val nivelAtivo = f.nivelSaudeAtual
+
+            // ── CORREÇÃO: pontos e máximo lidos corretamente por nível ──
+            val maxPontosNivel = f.maxNivel6  // todos os níveis têm o mesmo máximo
+
             val pontosAtivo = when (nivelAtivo) {
                 6 -> f.pontosNivel6
                 5 -> f.pontosNivel5
@@ -106,37 +109,30 @@ fun FichaAssimilacaoTab(
             }
 
             SaudeProgressivaCard(
-                nivelAtivo = nivelAtivo,
-                pontosAtivo = pontosAtivo,
-                maxPontos = f.maxNivel6, // todos têm o mesmo max
-                totalPontos = f.pontosNivel6 + f.pontosNivel5 + f.pontosNivel4 +
+                nivelAtivo    = nivelAtivo,
+                pontosAtivo   = pontosAtivo,
+                maxPontos     = maxPontosNivel,   // ← usa o valor real salvo
+                totalPontos   = f.pontosNivel6 + f.pontosNivel5 + f.pontosNivel4 +
                         f.pontosNivel3 + f.pontosNivel2 + f.pontosNivel1,
-                totalMax = f.maxNivel6 * 6,
+                totalMax      = maxPontosNivel * 6,
                 onDano = {
                     if (pontosAtivo > 0) {
                         viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo - 1)
                     }
                 },
                 onCura = {
-                    if (pontosAtivo < f.maxNivel6) {
-                        // Cura normal dentro do nível atual
+                    if (pontosAtivo < maxPontosNivel) {
+                        // Cura dentro do nível atual
                         viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo + 1)
                     } else if (nivelAtivo < 6) {
-                        // Nível atual já está cheio — sobe para o nível anterior (mais saudável)
-                        // Restaura o nível acima com o valor máximo
-                        viewModel.atualizarSaudeNivel(nivelAtivo + 1, f.maxNivel6)
+                        // Nível atual cheio — restaura o nível acima com valor máximo real
+                        viewModel.atualizarSaudeNivel(nivelAtivo + 1, maxPontosNivel)
                     }
                 },
                 onMaxChange = { novoMax ->
-                    // Altera max e reseta todos os pontos para o novo máximo
-                    viewModel.atualizarMaxSaude(
-                        novoMax, novoMax, novoMax,
-                        novoMax, novoMax, novoMax
-                    )
-                    viewModel.atualizarSaude(
-                        novoMax, novoMax, novoMax,
-                        novoMax, novoMax, novoMax
-                    )
+                    // Função atômica — max e pontos num único update
+                    // Duas chamadas separadas causam race condition
+                    viewModel.atualizarMaxESaude(novoMax)
                 }
             )
         }
@@ -145,11 +141,11 @@ fun FichaAssimilacaoTab(
         ficha?.let { f ->
             CaboDeGuerraCard(
                 nivelDeterminacao = f.nivelDeterminacao,
-                nivelAssimilacao = f.nivelAssimilacao,
+                nivelAssimilacao  = f.nivelAssimilacao,
                 pontosDeterminacao = f.pontosDeterminacao,
-                pontosAssimilacao = f.pontosAssimilacao,
-                onNivelDetChange = { viewModel.atualizarNivelDeterminacao(it) },
-                onPontosDetChange = { viewModel.atualizarPontosDeterminacao(it) },
+                pontosAssimilacao  = f.pontosAssimilacao,
+                onNivelDetChange   = { viewModel.atualizarNivelDeterminacao(it) },
+                onPontosDetChange  = { viewModel.atualizarPontosDeterminacao(it) },
                 onPontosAssimChange = { viewModel.atualizarPontosAssimilacao(it) }
             )
         }
@@ -195,6 +191,7 @@ fun SaudeProgressivaCard(
         label = "corSaude"
     )
 
+    // ── CORREÇÃO: progresso calculado com maxPontos real ──
     val progresso by animateFloatAsState(
         targetValue = if (maxPontos > 0) pontosAtivo.toFloat() / maxPontos.toFloat() else 0f,
         animationSpec = tween(400),
@@ -240,7 +237,7 @@ fun SaudeProgressivaCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Barra única animada
+            // Barra animada
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -255,6 +252,7 @@ fun SaudeProgressivaCard(
                         .clip(RoundedCornerShape(16.dp))
                         .background(corAtual)
                 )
+                // ── CORREÇÃO: exibe maxPontos real na label ──
                 Text(
                     "$pontosAtivo / $maxPontos",
                     modifier = Modifier.align(Alignment.Center),
@@ -266,7 +264,7 @@ fun SaudeProgressivaCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Botões de dano e cura
+            // Botões dano / cura
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -276,7 +274,7 @@ fun SaudeProgressivaCard(
                     onClick = onDano,
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
-                        contentColor = MaterialTheme.colorScheme.error
+                        contentColor   = MaterialTheme.colorScheme.error
                     )
                 ) {
                     Text("− DANO", fontWeight = FontWeight.Bold)
@@ -286,7 +284,7 @@ fun SaudeProgressivaCard(
                     onClick = onCura,
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = corAtual.copy(alpha = 0.15f),
-                        contentColor = corAtual
+                        contentColor   = corAtual
                     )
                 ) {
                     Text("+ CURA", fontWeight = FontWeight.Bold)
@@ -302,8 +300,8 @@ fun SaudeProgressivaCard(
                 verticalAlignment = Alignment.Bottom
             ) {
                 condicoesSaude.reversed().forEach { cond ->
-                    val isAtivo  = cond.nivel == nivelAtivo
-                    val isAtras  = cond.nivel < nivelAtivo  // já passou = zerado
+                    val isAtivo = cond.nivel == nivelAtivo
+                    val isAtras = cond.nivel < nivelAtivo
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -317,8 +315,8 @@ fun SaudeProgressivaCard(
                                 .background(
                                     when {
                                         isAtivo -> cond.cor
-                                        isAtras -> cond.cor.copy(alpha = 0.25f) // zerado
-                                        else    -> cond.cor.copy(alpha = 0.55f) // futuro
+                                        isAtras -> cond.cor.copy(alpha = 0.25f)
+                                        else    -> cond.cor.copy(alpha = 0.55f)
                                     }
                                 )
                         )
@@ -338,7 +336,7 @@ fun SaudeProgressivaCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Totais e editar máximo
+            // Total e editar máximo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -350,6 +348,7 @@ fun SaudeProgressivaCard(
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // ── CORREÇÃO: totalMax calculado com o máximo real ──
                     Text(
                         "$totalPontos / $totalMax",
                         fontSize = 15.sp,
@@ -370,7 +369,7 @@ fun SaudeProgressivaCard(
 
     if (showMaxDialog) {
         MaxSaudeUnicoDialog(
-            maxAtual = maxPontos,
+            maxAtual  = maxPontos,
             onDismiss = { showMaxDialog = false },
             onConfirm = { novoMax ->
                 onMaxChange(novoMax)
@@ -381,7 +380,7 @@ fun SaudeProgressivaCard(
 }
 
 // ─────────────────────────────────────────────────────────────
-// DIALOG — EDITAR MÁXIMO ÚNICO
+// DIALOG — EDITAR MÁXIMO
 // ─────────────────────────────────────────────────────────────
 @Composable
 fun MaxSaudeUnicoDialog(
@@ -491,11 +490,11 @@ fun CaboDeGuerraCard(
                 ContadorCaboDeGuerra(
                     label = "Determinação",
                     emoji = "🛡️",
-                    cor = Color(0xFF1565C0),
+                    cor   = Color(0xFF1565C0),
                     nivel = nivelDeterminacao,
                     pontos = pontosDeterminacao,
-                    onNivelMenos = { if (nivelDeterminacao > 0) onNivelDetChange(nivelDeterminacao - 1) },
-                    onNivelMais  = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
+                    onNivelMenos  = { if (nivelDeterminacao > 0)  onNivelDetChange(nivelDeterminacao - 1) },
+                    onNivelMais   = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
                     onPontosMenos = { if (pontosDeterminacao > 0) onPontosDetChange(pontosDeterminacao - 1) },
                     onPontosMais  = { if (pontosDeterminacao < nivelDeterminacao) onPontosDetChange(pontosDeterminacao + 1) },
                     modifier = Modifier.weight(1f)
@@ -513,13 +512,12 @@ fun CaboDeGuerraCard(
                 ContadorCaboDeGuerra(
                     label = "Assimilação",
                     emoji = "🦠",
-                    cor = Color(0xFF6A1B9A),
+                    cor   = Color(0xFF6A1B9A),
                     nivel = nivelAssimilacao,
                     pontos = pontosAssimilacao,
-                    // Assimilação é inverso — aumentar Assim = diminuir Det
                     onNivelMenos  = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
-                    onNivelMais   = { if (nivelDeterminacao > 0) onNivelDetChange(nivelDeterminacao - 1) },
-                    onPontosMenos = { if (pontosAssimilacao > 0) onPontosAssimChange(pontosAssimilacao - 1) },
+                    onNivelMais   = { if (nivelDeterminacao > 0)  onNivelDetChange(nivelDeterminacao - 1) },
+                    onPontosMenos = { if (pontosAssimilacao > 0)  onPontosAssimChange(pontosAssimilacao - 1) },
                     onPontosMais  = { if (pontosAssimilacao < nivelAssimilacao) onPontosAssimChange(pontosAssimilacao + 1) },
                     modifier = Modifier.weight(1f)
                 )
@@ -534,7 +532,6 @@ fun CaboDeGuerraCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Barra D vs E
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

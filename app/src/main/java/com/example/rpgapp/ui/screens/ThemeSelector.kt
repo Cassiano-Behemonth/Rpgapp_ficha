@@ -23,7 +23,8 @@ enum class AppTheme {
     GOLD_BLACK,
     PURPLE_GRAY,
     BLUE_WHITE,
-    WILD_WEST
+    WILD_WEST,
+    ASSIMILACAO
 }
 
 @Composable
@@ -106,10 +107,19 @@ fun ThemeSelectorScreen(
         ThemeCard(
             title = "🔫 Velho Oeste",
             subtitle = "Laranja queimado e dourado",
-            primaryColor = Color(0xFFD2691E), // Laranja queimado
-            backgroundColor = Color(0xFFFFF8DC), // Bege/creme claro
+            primaryColor = Color(0xFFD2691E),
+            backgroundColor = Color(0xFFFFF8DC),
             isSelected = currentTheme == AppTheme.WILD_WEST,
             onClick = { onThemeSelected(AppTheme.WILD_WEST) }
+        )
+
+        ThemeCard(
+            title = "🧬 Assimilação",
+            subtitle = "Verde musgo • Azul veia • Vermelho coagulado",
+            primaryColor = Color(0xFF6B8F5E),
+            backgroundColor = Color(0xFF080A08),
+            isSelected = currentTheme == AppTheme.ASSIMILACAO,
+            onClick = { onThemeSelected(AppTheme.ASSIMILACAO) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))

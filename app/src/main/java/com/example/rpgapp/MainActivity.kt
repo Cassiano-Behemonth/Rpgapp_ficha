@@ -53,12 +53,13 @@ class MainActivity : ComponentActivity() {
             // Atualiza a cor da barra de status baseada no tema
             LaunchedEffect(currentTheme) {
                 val statusBarColor = when (currentTheme) {
-                    AppTheme.GREEN_BLACK -> Color.Black
-                    AppTheme.RED_WHITE -> Color(0xFFFAFAFA)
-                    AppTheme.GOLD_BLACK -> Color.Black
-                    AppTheme.PURPLE_GRAY -> Color.Black
-                    AppTheme.BLUE_WHITE -> Color(0xFFFAFAFA)
-                    AppTheme.WILD_WEST -> Color(0xFFFFF8DC)  // Bege claro
+                    AppTheme.GREEN_BLACK  -> Color.Black
+                    AppTheme.RED_WHITE    -> Color(0xFFFAFAFA)
+                    AppTheme.GOLD_BLACK   -> Color.Black
+                    AppTheme.PURPLE_GRAY  -> Color.Black
+                    AppTheme.BLUE_WHITE   -> Color(0xFFFAFAFA)
+                    AppTheme.WILD_WEST    -> Color(0xFFFFF8DC)
+                    AppTheme.ASSIMILACAO  -> Color(0xFF080C08)  // Preto esverdeado
                 }
 
                 window.statusBarColor = statusBarColor.toArgb()
@@ -66,8 +67,8 @@ class MainActivity : ComponentActivity() {
                 // Define se os ícones da status bar devem ser escuros ou claros
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.isAppearanceLightStatusBars = when (currentTheme) {
-                    AppTheme.RED_WHITE, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true  // Ícones escuros para temas claros
-                    else -> false  // Ícones claros para temas escuros
+                    AppTheme.RED_WHITE, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true
+                    else -> false  // Ícones claros para temas escuros (incluindo ASSIMILACAO)
                 }
             }
 

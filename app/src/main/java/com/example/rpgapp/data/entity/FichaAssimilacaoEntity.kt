@@ -1,6 +1,7 @@
 package com.example.rpgapp.data.entity
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "fichas_assimilacao")
@@ -13,15 +14,13 @@ data class FichaAssimilacaoEntity(
     val jogador: String = "",
 
     // ── Saúde (6 níveis, pontos manuais por nível) ──────────
-    // Pontos atuais de cada nível (quando chega a 0 passa pro próximo)
-    val pontosNivel6: Int = 5, // Intacto     (começa aqui)
-    val pontosNivel5: Int = 5, // Arranhado
-    val pontosNivel4: Int = 5, // Ferido
-    val pontosNivel3: Int = 5, // Machucado
-    val pontosNivel2: Int = 5, // Crítico
-    val pontosNivel1: Int = 5, // Limiar
+    val pontosNivel6: Int = 5,
+    val pontosNivel5: Int = 5,
+    val pontosNivel4: Int = 5,
+    val pontosNivel3: Int = 5,
+    val pontosNivel2: Int = 5,
+    val pontosNivel1: Int = 5,
 
-    // Pontos máximos de cada nível (definidos manualmente pelo jogador)
     val maxNivel6: Int = 5,
     val maxNivel5: Int = 5,
     val maxNivel4: Int = 5,
@@ -30,13 +29,9 @@ data class FichaAssimilacaoEntity(
     val maxNivel1: Int = 5,
 
     // ── Cabo de Guerra ───────────────────────────────────────
-    // Nível: soma sempre = 10
-    val nivelDeterminacao: Int = 9, // D (padrão: começa em 9)
-    // nivelAssimilacao é calculado: 10 - nivelDeterminacao
-
-    // Pontos: recurso gasto/recuperado durante o jogo
-    val pontosDeterminacao: Int = 9, // d (máximo = nivelDeterminacao)
-    val pontosAssimilacao: Int = 1,  // e (máximo = nivelAssimilacao)
+    val nivelDeterminacao: Int = 9,
+    val pontosDeterminacao: Int = 9,
+    val pontosAssimilacao: Int = 1,
 
     // ── Aptidões — Instintos (1-5) ───────────────────────────
     val influencia: Int = 1,
@@ -77,12 +72,16 @@ data class FichaAssimilacaoEntity(
     val historia: String = "",
     val anotacoes: String = ""
 ) {
-    // Nível de Assimilação calculado automaticamente
+    // @Ignore: propriedades calculadas não são colunas do banco.
+    // Sem @Ignore o Room pode se confundir na hora de fazer queries,
+    // especialmente em data classes onde o construtor primário
+    // mistura campos persistidos e calculados.
+
+    @get:Ignore
     val nivelAssimilacao: Int
         get() = 10 - nivelDeterminacao
 
-    // Nível atual de saúde (qual barra está ativa)
-    // Retorna 6 (Intacto) até 1 (Limiar), ou 0 se morto
+    @get:Ignore
     val nivelSaudeAtual: Int
         get() = when {
             pontosNivel6 > 0 -> 6
@@ -94,7 +93,7 @@ data class FichaAssimilacaoEntity(
             else -> 0
         }
 
-    // Descrição narrativa da condição atual
+    @get:Ignore
     val condicaoNarrativa: String
         get() = when (nivelSaudeAtual) {
             6 -> "Intacto"

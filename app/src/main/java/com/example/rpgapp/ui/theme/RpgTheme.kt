@@ -41,11 +41,25 @@ private val BlueWhite_Background = Color(0xFFFAFAFA)
 private val BlueWhite_Surface = Color(0xFFFFFFFF)
 
 // Velho Oeste 🔫
-private val WildWest_Primary = Color(0xFFD2691E)         // Laranja queimado
-private val WildWest_Light = Color(0xFFDAA520)           // Dourado claro
-private val WildWest_Dark = Color(0xFF8B4513)            // Marrom sela
-private val WildWest_Background = Color(0xFFFFF8DC)      // Bege claro
-private val WildWest_Surface = Color(0xFFFAF0E6)         // Creme
+private val WildWest_Primary = Color(0xFFD2691E)
+private val WildWest_Light = Color(0xFFDAA520)
+private val WildWest_Dark = Color(0xFF8B4513)
+private val WildWest_Background = Color(0xFFFFF8DC)
+private val WildWest_Surface = Color(0xFFFAF0E6)
+
+// 🧬 Assimilação — orgânico, sujo, perturbador
+// Verde musgo podre  #4A6741 / #6B8F5E
+// Vermelho coagulado #8B1A1A
+// Azul veia profundo #1A3A5C / #2E5F8A
+private val Assim_Green      = Color(0xFF4A6741)   // Verde musgo escuro
+private val Assim_GreenLight = Color(0xFF6B8F5E)   // Verde musgo médio
+private val Assim_GreenDark  = Color(0xFF2D4228)   // Verde floresta profundo
+private val Assim_Red        = Color(0xFF8B1A1A)   // Vermelho sangue coagulado
+private val Assim_Blue       = Color(0xFF1A3A5C)   // Azul veia profundo
+private val Assim_BlueGlow   = Color(0xFF2E5F8A)   // Azul bioluminescente
+private val Assim_Background = Color(0xFF080A08)   // Quase preto orgânico
+private val Assim_Surface    = Color(0xFF0E130E)   // Superfície verde escuríssima
+private val Assim_SurfaceVar = Color(0xFF131A13)   // Cards — floresta noturna
 
 @Composable
 fun getColorScheme(theme: AppTheme): ColorScheme {
@@ -63,7 +77,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = GreenBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = GreenBlack_Light,
-            surfaceContainer = GreenBlack_Surface,     // Para tabs
+            surfaceContainer = GreenBlack_Surface,
             error = Color(0xFFEF5350),
             outline = GreenBlack_Dark,
             inverseSurface = GreenBlack_Light,
@@ -83,7 +97,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = RedWhite_Primary,
             surfaceVariant = Color(0xFFF5F5F5),
             onSurfaceVariant = Color(0xFF424242),
-            surfaceContainer = RedWhite_Surface,      // Para tabs
+            surfaceContainer = RedWhite_Surface,
             error = Color(0xFFB71C1C),
             outline = RedWhite_Dark,
             inverseSurface = RedWhite_Primary,
@@ -103,7 +117,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = GoldBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = GoldBlack_Light,
-            surfaceContainer = GoldBlack_Surface,     // Para tabs
+            surfaceContainer = GoldBlack_Surface,
             error = Color(0xFFFF6F00),
             outline = GoldBlack_Dark,
             inverseSurface = GoldBlack_Light,
@@ -123,7 +137,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = PurpleBlack_Primary,
             surfaceVariant = Color(0xFF1E1E1E),
             onSurfaceVariant = PurpleBlack_Light,
-            surfaceContainer = PurpleBlack_Surface,   // Para tabs
+            surfaceContainer = PurpleBlack_Surface,
             error = Color(0xFFE040FB),
             outline = PurpleBlack_Dark,
             inverseSurface = PurpleBlack_Light,
@@ -143,7 +157,7 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             onSurface = BlueWhite_Primary,
             surfaceVariant = Color(0xFFF5F5F5),
             onSurfaceVariant = Color(0xFF424242),
-            surfaceContainer = BlueWhite_Surface,     // Para tabs
+            surfaceContainer = BlueWhite_Surface,
             error = Color(0xFFD32F2F),
             outline = BlueWhite_Dark,
             inverseSurface = BlueWhite_Primary,
@@ -151,23 +165,62 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
         )
 
         AppTheme.WILD_WEST -> lightColorScheme(
-            primary = WildWest_Primary,              // Laranja queimado
+            primary = WildWest_Primary,
             onPrimary = Color.White,
-            primaryContainer = WildWest_Light,       // Dourado
-            onPrimaryContainer = WildWest_Dark,      // Marrom escuro
-            secondary = WildWest_Light,              // Dourado
+            primaryContainer = WildWest_Light,
+            onPrimaryContainer = WildWest_Dark,
+            secondary = WildWest_Light,
             onSecondary = Color.White,
-            background = WildWest_Background,        // Bege claro
-            onBackground = Color(0xFF3E2723),        // Marrom escuro
-            surface = WildWest_Surface,              // Creme
-            onSurface = WildWest_Primary,            // Laranja queimado
-            surfaceVariant = Color(0xFFFFE4B5),      // Bege médio
-            onSurfaceVariant = Color(0xFF3E2723),    // Marrom escuro
-            surfaceContainer = Color(0xFFFFE4B5),    // MESMA COR DOS CARDS (bege médio)
+            background = WildWest_Background,
+            onBackground = Color(0xFF3E2723),
+            surface = WildWest_Surface,
+            onSurface = WildWest_Primary,
+            surfaceVariant = Color(0xFFFFE4B5),
+            onSurfaceVariant = Color(0xFF3E2723),
+            surfaceContainer = Color(0xFFFFE4B5),
             error = Color(0xFFD32F2F),
-            outline = Color(0xFFCD853F),             // Bronze
+            outline = Color(0xFFCD853F),
             inverseSurface = WildWest_Primary,
             inverseOnSurface = Color.White
+        )
+
+        AppTheme.ASSIMILACAO -> darkColorScheme(
+            // ── Primária: Verde musgo ───────────────────────
+            primary             = Assim_GreenLight,    // #6B8F5E — verde musgo médio
+            onPrimary           = Color(0xFF080A08),
+            primaryContainer    = Assim_GreenDark,     // #2D4228 — floresta profunda
+            onPrimaryContainer  = Assim_GreenLight,
+
+            // ── Secundária: Azul veia ───────────────────────
+            secondary           = Assim_BlueGlow,      // #2E5F8A — azul bioluminescente
+            onSecondary         = Color.White,
+            secondaryContainer  = Assim_Blue,          // #1A3A5C — azul veia profundo
+            onSecondaryContainer = Color(0xFF8FBFE0),
+
+            // ── Fundo e superfícies ─────────────────────────
+            background          = Assim_Background,    // #080A08 — quase preto orgânico
+            onBackground        = Assim_GreenLight,
+
+            surface             = Assim_Surface,       // #0E130E
+            onSurface           = Assim_GreenLight,
+
+            surfaceVariant      = Assim_SurfaceVar,    // #131A13 — cards
+            onSurfaceVariant    = Color(0xFF7A9E72),   // verde acinzentado p/ textos sec.
+
+            surfaceContainer    = Assim_Surface,       // tabs
+
+            // ── Erros: Vermelho coagulado ───────────────────
+            error               = Assim_Red,           // #8B1A1A
+            onError             = Color(0xFFFFCDD2),
+            errorContainer      = Color(0xFF4A0A0A),
+            onErrorContainer    = Color(0xFFFFABAB),
+
+            // ── Bordas ──────────────────────────────────────
+            outline             = Assim_Green,         // #4A6741
+            outlineVariant      = Color(0xFF1E2C1E),
+
+            inverseSurface      = Assim_GreenLight,
+            inverseOnSurface    = Color(0xFF080A08)
         )
     }
 }
