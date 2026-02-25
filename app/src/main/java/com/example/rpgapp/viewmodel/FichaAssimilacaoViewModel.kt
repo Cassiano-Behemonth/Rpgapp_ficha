@@ -121,6 +121,24 @@ class FichaAssimilacaoViewModel(application: Application) : AndroidViewModel(app
         }
     }
 
+    // Atualiza apenas o nível de saúde ativo (helper para barra única)
+    fun atualizarSaudeNivel(nivel: Int, pontos: Int) {
+        viewModelScope.launch {
+            val fichaAtual = ficha.value ?: return@launch
+            fichaDao.updateFicha(
+                when (nivel) {
+                    6 -> fichaAtual.copy(pontosNivel6 = pontos)
+                    5 -> fichaAtual.copy(pontosNivel5 = pontos)
+                    4 -> fichaAtual.copy(pontosNivel4 = pontos)
+                    3 -> fichaAtual.copy(pontosNivel3 = pontos)
+                    2 -> fichaAtual.copy(pontosNivel2 = pontos)
+                    1 -> fichaAtual.copy(pontosNivel1 = pontos)
+                    else -> fichaAtual
+                }
+            )
+        }
+    }
+
     // ── Cabo de Guerra ───────────────────────────────────────
     fun atualizarNivelDeterminacao(nivel: Int) {
         viewModelScope.launch {

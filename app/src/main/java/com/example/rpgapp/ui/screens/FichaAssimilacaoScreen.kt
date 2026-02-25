@@ -74,8 +74,8 @@ fun FichaAssimilacaoScreen(
                 1 -> AptidoesAssimilacaoScreen(viewModel = viewModel)
                 2 -> AssimilacoesScreen(viewModel = viewModel)
                 3 -> InventarioAssimilacaoScreen(viewModel = viewModel)
-                /* CaracteristicasAssimilacaoScreen(viewModel = viewModel)
-                5 -> DescricaoAssimilacaoScreen(viewModel = viewModel)*/
+                4 -> CaracteristicasAssimilacaoScreen(viewModel = viewModel)
+                5 -> DescricaoAssimilacaoScreen(viewModel = viewModel)
             }
         }
     }

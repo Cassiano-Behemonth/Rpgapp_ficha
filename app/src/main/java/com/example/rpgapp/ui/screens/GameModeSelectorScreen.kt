@@ -93,7 +93,7 @@ fun GameModeSelectorScreen(
 
         // Card Assimilação
         GameModeCard(
-            title = "🧬 ASSIMILAÇÃO",
+            title = "🧬 SOBREVIVÊNCIA",
             description = "RPG pós-apocalíptico de sobrevivência e mutação",
             features = listOf(
                 "Aptidões: Instintos, Conhecimentos e Práticas",

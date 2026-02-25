@@ -15,19 +15,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rpgapp.ui.theme.AppTextFieldDefaults
 import com.example.rpgapp.viewmodel.FichaAssimilacaoViewModel
 import kotlinx.coroutines.delay
 
-// ── Cores narrativas da Saúde ────────────────────────────────
-val corSaude6 = Color(0xFF43A047) // Intacto     — verde
-val corSaude5 = Color(0xFF7CB342) // Arranhado   — verde amarelado
-val corSaude4 = Color(0xFFFDD835) // Ferido      — amarelo
-val corSaude3 = Color(0xFFFB8C00) // Machucado   — laranja
-val corSaude2 = Color(0xFFE53935) // Crítico     — vermelho
-val corSaude1 = Color(0xFF6A1B9A) // Limiar      — roxo escuro
-val corMorto  = Color(0xFF212121) // Morto       — preto
+// ── Condições de saúde ───────────────────────────────────────
+data class CondicaoSaude(
+    val nivel: Int,
+    val nome: String,
+    val cor: Color
+)
+
+val condicoesSaude = listOf(
+    CondicaoSaude(6, "SAUDÁVEL",      Color(0xFF43A047)),
+    CondicaoSaude(5, "ESCORIAÇÃO",    Color(0xFF7CB342)),
+    CondicaoSaude(4, "LACERAÇÃO",     Color(0xFFFDD835)),
+    CondicaoSaude(3, "FERIMENTOS",    Color(0xFFFB8C00)),
+    CondicaoSaude(2, "DEBILITAÇÃO",   Color(0xFFE53935)),
+    CondicaoSaude(1, "INCAPACITAÇÃO", Color(0xFF6A1B9A)),
+)
 
 @Composable
 fun FichaAssimilacaoTab(
@@ -36,15 +45,12 @@ fun FichaAssimilacaoTab(
     onModeChange: () -> Unit
 ) {
     val ficha by viewModel.ficha.collectAsState()
-
-    // ── Estado local do nome ─────────────────────────────────
     var nome by remember { mutableStateOf("") }
 
     LaunchedEffect(ficha) {
         ficha?.let { nome = it.nome }
     }
 
-    // Salvamento automático do nome
     LaunchedEffect(nome) {
         delay(1000)
         viewModel.salvarNome(nome)
@@ -79,27 +85,58 @@ fun FichaAssimilacaoTab(
                     onValueChange = { nome = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    placeholder = { Text("Nome do personagem") }
+                    placeholder = { Text("Nome do personagem") },
+                    colors = AppTextFieldDefaults.colors()
                 )
             }
         }
 
         // ── Saúde ─────────────────────────────────────────────
         ficha?.let { f ->
-            SaudeNarrativaCard(
-                pontosNivel6 = f.pontosNivel6, maxNivel6 = f.maxNivel6,
-                pontosNivel5 = f.pontosNivel5, maxNivel5 = f.maxNivel5,
-                pontosNivel4 = f.pontosNivel4, maxNivel4 = f.maxNivel4,
-                pontosNivel3 = f.pontosNivel3, maxNivel3 = f.maxNivel3,
-                pontosNivel2 = f.pontosNivel2, maxNivel2 = f.maxNivel2,
-                pontosNivel1 = f.pontosNivel1, maxNivel1 = f.maxNivel1,
-                nivelAtual = f.nivelSaudeAtual,
-                condicao = f.condicaoNarrativa,
-                onPontosChange = { n6, n5, n4, n3, n2, n1 ->
-                    viewModel.atualizarSaude(n6, n5, n4, n3, n2, n1)
+            // Determina qual é o nível ativo e seus pontos
+            val nivelAtivo = f.nivelSaudeAtual
+            val pontosAtivo = when (nivelAtivo) {
+                6 -> f.pontosNivel6
+                5 -> f.pontosNivel5
+                4 -> f.pontosNivel4
+                3 -> f.pontosNivel3
+                2 -> f.pontosNivel2
+                1 -> f.pontosNivel1
+                else -> 0
+            }
+
+            SaudeProgressivaCard(
+                nivelAtivo = nivelAtivo,
+                pontosAtivo = pontosAtivo,
+                maxPontos = f.maxNivel6, // todos têm o mesmo max
+                totalPontos = f.pontosNivel6 + f.pontosNivel5 + f.pontosNivel4 +
+                        f.pontosNivel3 + f.pontosNivel2 + f.pontosNivel1,
+                totalMax = f.maxNivel6 * 6,
+                onDano = {
+                    if (pontosAtivo > 0) {
+                        viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo - 1)
+                    }
                 },
-                onMaxChange = { n6, n5, n4, n3, n2, n1 ->
-                    viewModel.atualizarMaxSaude(n6, n5, n4, n3, n2, n1)
+                onCura = {
+                    if (pontosAtivo < f.maxNivel6) {
+                        // Cura normal dentro do nível atual
+                        viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo + 1)
+                    } else if (nivelAtivo < 6) {
+                        // Nível atual já está cheio — sobe para o nível anterior (mais saudável)
+                        // Restaura o nível acima com o valor máximo
+                        viewModel.atualizarSaudeNivel(nivelAtivo + 1, f.maxNivel6)
+                    }
+                },
+                onMaxChange = { novoMax ->
+                    // Altera max e reseta todos os pontos para o novo máximo
+                    viewModel.atualizarMaxSaude(
+                        novoMax, novoMax, novoMax,
+                        novoMax, novoMax, novoMax
+                    )
+                    viewModel.atualizarSaude(
+                        novoMax, novoMax, novoMax,
+                        novoMax, novoMax, novoMax
+                    )
                 }
             )
         }
@@ -117,7 +154,6 @@ fun FichaAssimilacaoTab(
             )
         }
 
-        // ── Botões de navegação ───────────────────────────────
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedButton(
@@ -137,34 +173,32 @@ fun FichaAssimilacaoTab(
 }
 
 // ─────────────────────────────────────────────────────────────
-// SAÚDE NARRATIVA
+// SAÚDE PROGRESSIVA — BARRA ÚNICA
 // ─────────────────────────────────────────────────────────────
 @Composable
-fun SaudeNarrativaCard(
-    pontosNivel6: Int, maxNivel6: Int,
-    pontosNivel5: Int, maxNivel5: Int,
-    pontosNivel4: Int, maxNivel4: Int,
-    pontosNivel3: Int, maxNivel3: Int,
-    pontosNivel2: Int, maxNivel2: Int,
-    pontosNivel1: Int, maxNivel1: Int,
-    nivelAtual: Int,
-    condicao: String,
-    onPontosChange: (Int, Int, Int, Int, Int, Int) -> Unit,
-    onMaxChange: (Int, Int, Int, Int, Int, Int) -> Unit
+fun SaudeProgressivaCard(
+    nivelAtivo: Int,
+    pontosAtivo: Int,
+    maxPontos: Int,
+    totalPontos: Int,
+    totalMax: Int,
+    onDano: () -> Unit,
+    onCura: () -> Unit,
+    onMaxChange: (Int) -> Unit
 ) {
-    // Cor animada baseada na condição atual
+    val condicaoAtual = condicoesSaude.find { it.nivel == nivelAtivo }
+        ?: condicoesSaude.last()
+
     val corAtual by animateColorAsState(
-        targetValue = when (nivelAtual) {
-            6 -> corSaude6
-            5 -> corSaude5
-            4 -> corSaude4
-            3 -> corSaude3
-            2 -> corSaude2
-            1 -> corSaude1
-            else -> corMorto
-        },
+        targetValue = if (nivelAtivo == 0) Color(0xFF212121) else condicaoAtual.cor,
         animationSpec = tween(600),
         label = "corSaude"
+    )
+
+    val progresso by animateFloatAsState(
+        targetValue = if (maxPontos > 0) pontosAtivo.toFloat() / maxPontos.toFloat() else 0f,
+        animationSpec = tween(400),
+        label = "progressoSaude"
     )
 
     var showMaxDialog by remember { mutableStateOf(false) }
@@ -177,7 +211,7 @@ fun SaudeNarrativaCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Header com condição atual
+            // Header com badge de condição
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -189,8 +223,6 @@ fun SaudeNarrativaCard(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-
-                // Badge da condição atual
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -198,8 +230,8 @@ fun SaudeNarrativaCard(
                         .padding(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (nivelAtual == 0) "☠️ MORTO" else condicao.uppercase(),
-                        fontSize = 12.sp,
+                        text = if (nivelAtivo == 0) "☠️ MORTO" else condicaoAtual.nome,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -208,269 +240,212 @@ fun SaudeNarrativaCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6 barras de saúde sequenciais
-            val niveis = listOf(
-                NivelSaude(6, "Intacto",   corSaude6, pontosNivel6, maxNivel6),
-                NivelSaude(5, "Arranhado", corSaude5, pontosNivel5, maxNivel5),
-                NivelSaude(4, "Ferido",    corSaude4, pontosNivel4, maxNivel4),
-                NivelSaude(3, "Machucado", corSaude3, pontosNivel3, maxNivel3),
-                NivelSaude(2, "Crítico",   corSaude2, pontosNivel2, maxNivel2),
-                NivelSaude(1, "Limiar",    corSaude1, pontosNivel1, maxNivel1),
-            )
+            // Barra única animada
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progresso)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(corAtual)
+                )
+                Text(
+                    "$pontosAtivo / $maxPontos",
+                    modifier = Modifier.align(Alignment.Center),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                niveis.forEach { nivel ->
-                    val isAtivo = nivel.numero == nivelAtual
-                    val isDesbloqueado = nivel.numero >= nivelAtual || nivelAtual == 0
+            Spacer(modifier = Modifier.height(14.dp))
 
-                    BarraSaude(
-                        nivel = nivel,
-                        isAtivo = isAtivo,
-                        isDesbloqueado = isDesbloqueado,
-                        onDano = {
-                            // Reduz 1 ponto do nível atual
-                            val novosPontos = (nivel.pontos - 1).coerceAtLeast(0)
-                            emitirMudancaSaude(
-                                nivelAlterado = nivel.numero,
-                                novosPontos = novosPontos,
-                                p6 = pontosNivel6, p5 = pontosNivel5,
-                                p4 = pontosNivel4, p3 = pontosNivel3,
-                                p2 = pontosNivel2, p1 = pontosNivel1,
-                                onChange = onPontosChange
-                            )
-                        },
-                        onCura = {
-                            // Aumenta 1 ponto do nível atual (até o máximo)
-                            val novosPontos = (nivel.pontos + 1).coerceAtMost(nivel.max)
-                            emitirMudancaSaude(
-                                nivelAlterado = nivel.numero,
-                                novosPontos = novosPontos,
-                                p6 = pontosNivel6, p5 = pontosNivel5,
-                                p4 = pontosNivel4, p3 = pontosNivel3,
-                                p2 = pontosNivel2, p1 = pontosNivel1,
-                                onChange = onPontosChange
-                            )
-                        }
+            // Botões de dano e cura
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalButton(
+                    onClick = onDano,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
+                        contentColor = MaterialTheme.colorScheme.error
                     )
+                ) {
+                    Text("− DANO", fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                FilledTonalButton(
+                    onClick = onCura,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = corAtual.copy(alpha = 0.15f),
+                        contentColor = corAtual
+                    )
+                ) {
+                    Text("+ CURA", fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Trilha de condições
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                condicoesSaude.reversed().forEach { cond ->
+                    val isAtivo  = cond.nivel == nivelAtivo
+                    val isAtras  = cond.nivel < nivelAtivo  // já passou = zerado
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(if (isAtivo) 8.dp else 5.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    when {
+                                        isAtivo -> cond.cor
+                                        isAtras -> cond.cor.copy(alpha = 0.25f) // zerado
+                                        else    -> cond.cor.copy(alpha = 0.55f) // futuro
+                                    }
+                                )
+                        )
+                        Text(
+                            cond.nome.take(4),
+                            fontSize = 7.sp,
+                            fontWeight = if (isAtivo) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isAtivo) cond.cor
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Botão para editar máximos
-            TextButton(
-                onClick = { showMaxDialog = true },
-                modifier = Modifier.align(Alignment.End)
+            // Totais e editar máximo
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "✏️ Editar máximos",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Column {
+                    Text(
+                        "Total de vida",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "$totalPontos / $totalMax",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                TextButton(onClick = { showMaxDialog = true }) {
+                    Text(
+                        "✏️ Editar máximo",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }
 
     if (showMaxDialog) {
-        MaxSaudeDialog(
-            maxNivel6 = maxNivel6, maxNivel5 = maxNivel5,
-            maxNivel4 = maxNivel4, maxNivel3 = maxNivel3,
-            maxNivel2 = maxNivel2, maxNivel1 = maxNivel1,
+        MaxSaudeUnicoDialog(
+            maxAtual = maxPontos,
             onDismiss = { showMaxDialog = false },
-            onConfirm = { n6, n5, n4, n3, n2, n1 ->
-                onMaxChange(n6, n5, n4, n3, n2, n1)
+            onConfirm = { novoMax ->
+                onMaxChange(novoMax)
                 showMaxDialog = false
             }
         )
     }
 }
 
-data class NivelSaude(
-    val numero: Int,
-    val nome: String,
-    val cor: Color,
-    val pontos: Int,
-    val max: Int
-)
-
+// ─────────────────────────────────────────────────────────────
+// DIALOG — EDITAR MÁXIMO ÚNICO
+// ─────────────────────────────────────────────────────────────
 @Composable
-fun BarraSaude(
-    nivel: NivelSaude,
-    isAtivo: Boolean,
-    isDesbloqueado: Boolean,
-    onDano: () -> Unit,
-    onCura: () -> Unit
-) {
-    val progresso by animateFloatAsState(
-        targetValue = if (nivel.max > 0) nivel.pontos.toFloat() / nivel.max.toFloat() else 0f,
-        animationSpec = tween(400),
-        label = "progresso_${nivel.numero}"
-    )
-
-    val alpha = if (isDesbloqueado) 1f else 0.3f
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Label do nível
-        Text(
-            text = nivel.nome,
-            fontSize = 11.sp,
-            fontWeight = if (isAtivo) FontWeight.Bold else FontWeight.Normal,
-            color = if (isAtivo) nivel.cor
-            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
-            modifier = Modifier.width(72.dp)
-        )
-
-        // Barra de progresso
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(14.dp)
-                .clip(RoundedCornerShape(7.dp))
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progresso)
-                    .clip(RoundedCornerShape(7.dp))
-                    .background(nivel.cor.copy(alpha = alpha))
-            )
-        }
-
-        // Contador
-        Text(
-            text = "${nivel.pontos}/${nivel.max}",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (isAtivo) nivel.cor
-            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
-            modifier = Modifier.width(36.dp)
-        )
-
-        // Botões - e + (só ativos no nível atual ou desbloqueados)
-        if (isDesbloqueado) {
-            IconButton(
-                onClick = onDano,
-                modifier = Modifier.size(28.dp),
-                enabled = nivel.pontos > 0
-            ) {
-                Text(
-                    "−",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (nivel.pontos > 0) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                )
-            }
-            IconButton(
-                onClick = onCura,
-                modifier = Modifier.size(28.dp),
-                enabled = nivel.pontos < nivel.max
-            ) {
-                Text(
-                    "+",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (nivel.pontos < nivel.max) nivel.cor
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.width(56.dp))
-        }
-    }
-}
-
-// Helper para emitir mudança mantendo os outros níveis intactos
-fun emitirMudancaSaude(
-    nivelAlterado: Int,
-    novosPontos: Int,
-    p6: Int, p5: Int, p4: Int, p3: Int, p2: Int, p1: Int,
-    onChange: (Int, Int, Int, Int, Int, Int) -> Unit
-) {
-    onChange(
-        if (nivelAlterado == 6) novosPontos else p6,
-        if (nivelAlterado == 5) novosPontos else p5,
-        if (nivelAlterado == 4) novosPontos else p4,
-        if (nivelAlterado == 3) novosPontos else p3,
-        if (nivelAlterado == 2) novosPontos else p2,
-        if (nivelAlterado == 1) novosPontos else p1
-    )
-}
-
-@Composable
-fun MaxSaudeDialog(
-    maxNivel6: Int, maxNivel5: Int, maxNivel4: Int,
-    maxNivel3: Int, maxNivel2: Int, maxNivel1: Int,
+fun MaxSaudeUnicoDialog(
+    maxAtual: Int,
     onDismiss: () -> Unit,
-    onConfirm: (Int, Int, Int, Int, Int, Int) -> Unit
+    onConfirm: (Int) -> Unit
 ) {
-    var v6 by remember { mutableStateOf(maxNivel6.toString()) }
-    var v5 by remember { mutableStateOf(maxNivel5.toString()) }
-    var v4 by remember { mutableStateOf(maxNivel4.toString()) }
-    var v3 by remember { mutableStateOf(maxNivel3.toString()) }
-    var v2 by remember { mutableStateOf(maxNivel2.toString()) }
-    var v1 by remember { mutableStateOf(maxNivel1.toString()) }
+    var valor by remember { mutableStateOf(maxAtual.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text("Pontos Máximos por Nível", fontWeight = FontWeight.Bold)
-        },
+        title = { Text("Pontos por nível de saúde", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Define quantos pontos cada nível de saúde possui.",
+                    "O mesmo valor se aplica a todos os 6 níveis de saúde.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                listOf(
-                    Triple("Intacto (6)", corSaude6, v6) to { it: String -> v6 = it },
-                    Triple("Arranhado (5)", corSaude5, v5) to { it: String -> v5 = it },
-                    Triple("Ferido (4)", corSaude4, v4) to { it: String -> v4 = it },
-                    Triple("Machucado (3)", corSaude3, v3) to { it: String -> v3 = it },
-                    Triple("Crítico (2)", corSaude2, v2) to { it: String -> v2 = it },
-                    Triple("Limiar (1)", corSaude1, v1) to { it: String -> v1 = it },
-                ).forEach { (info, onChange) ->
-                    val (label, cor, valor) = info
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(cor)
-                        )
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = valor,
-                            onValueChange = { if (it.length <= 2) onChange(it) },
-                            modifier = Modifier.width(64.dp),
-                            singleLine = true
-                        )
+                OutlinedTextField(
+                    value = valor,
+                    onValueChange = { if (it.length <= 2) valor = it },
+                    label = { Text("Pontos por nível") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = AppTextFieldDefaults.colors()
+                )
+                Text(
+                    "Total: ${(valor.toIntOrNull() ?: 0) * 6} pts  (${valor} × 6 níveis)",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    condicoesSaude.forEach { cond ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(cond.cor)
+                            )
+                            Text(
+                                cond.nome,
+                                fontSize = 11.sp,
+                                modifier = Modifier.weight(1f),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "${valor.toIntOrNull() ?: 0} pts",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = cond.cor
+                            )
+                        }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                onConfirm(
-                    v6.toIntOrNull() ?: 5, v5.toIntOrNull() ?: 5,
-                    v4.toIntOrNull() ?: 5, v3.toIntOrNull() ?: 5,
-                    v2.toIntOrNull() ?: 5, v1.toIntOrNull() ?: 5
-                )
-            }) {
+            TextButton(onClick = { onConfirm(valor.toIntOrNull() ?: maxAtual) }) {
                 Text("Salvar", fontWeight = FontWeight.Bold)
             }
         },
@@ -500,7 +475,6 @@ fun CaboDeGuerraCard(
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
             Text(
                 "▸ 🧬 CABO DE GUERRA",
                 style = MaterialTheme.typography.titleMedium,
@@ -510,12 +484,10 @@ fun CaboDeGuerraCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Níveis lado a lado ────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Determinação
                 ContadorCaboDeGuerra(
                     label = "Determinação",
                     emoji = "🛡️",
@@ -523,85 +495,69 @@ fun CaboDeGuerraCard(
                     nivel = nivelDeterminacao,
                     pontos = pontosDeterminacao,
                     onNivelMenos = { if (nivelDeterminacao > 0) onNivelDetChange(nivelDeterminacao - 1) },
-                    onNivelMais = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
+                    onNivelMais  = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
                     onPontosMenos = { if (pontosDeterminacao > 0) onPontosDetChange(pontosDeterminacao - 1) },
-                    onPontosMais = { if (pontosDeterminacao < nivelDeterminacao) onPontosDetChange(pontosDeterminacao + 1) },
+                    onPontosMais  = { if (pontosDeterminacao < nivelDeterminacao) onPontosDetChange(pontosDeterminacao + 1) },
                     modifier = Modifier.weight(1f)
                 )
 
-                // Símbolo central
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(top = 24.dp)
+                    modifier = Modifier.padding(top = 20.dp)
                 ) {
-                    Text("🧬", fontSize = 28.sp)
-                    Text(
-                        "=10",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("🧬", fontSize = 26.sp)
+                    Text("=10", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
-                // Assimilação
                 ContadorCaboDeGuerra(
                     label = "Assimilação",
                     emoji = "🦠",
                     cor = Color(0xFF6A1B9A),
                     nivel = nivelAssimilacao,
                     pontos = pontosAssimilacao,
-                    onNivelMenos = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
-                    onNivelMais = { if (nivelDeterminacao > 0) onNivelDetChange(nivelDeterminacao - 1) },
+                    // Assimilação é inverso — aumentar Assim = diminuir Det
+                    onNivelMenos  = { if (nivelDeterminacao < 10) onNivelDetChange(nivelDeterminacao + 1) },
+                    onNivelMais   = { if (nivelDeterminacao > 0) onNivelDetChange(nivelDeterminacao - 1) },
                     onPontosMenos = { if (pontosAssimilacao > 0) onPontosAssimChange(pontosAssimilacao - 1) },
-                    onPontosMais = { if (pontosAssimilacao < nivelAssimilacao) onPontosAssimChange(pontosAssimilacao + 1) },
+                    onPontosMais  = { if (pontosAssimilacao < nivelAssimilacao) onPontosAssimChange(pontosAssimilacao + 1) },
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Barra visual do cabo de guerra
             Text(
                 "Nível",
                 fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Barra D vs E
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(12.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFF6A1B9A)) // fundo = assimilação
+                    .background(Color(0xFF6A1B9A))
             ) {
-                val propDet = nivelDeterminacao / 10f
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(propDet)
+                        .fillMaxWidth(nivelDeterminacao / 10f)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFF1565C0)) // frente = determinação
+                        .background(Color(0xFF1565C0))
                 )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    "D $nivelDeterminacao",
-                    fontSize = 11.sp,
-                    color = Color(0xFF1565C0),
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "E $nivelAssimilacao",
-                    fontSize = 11.sp,
-                    color = Color(0xFF6A1B9A),
-                    fontWeight = FontWeight.Bold
-                )
+                Text("D $nivelDeterminacao", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+                Text("E $nivelAssimilacao",  fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6A1B9A))
             }
         }
     }
@@ -623,61 +579,29 @@ fun ContadorCaboDeGuerra(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // Label
-        Text(
-            "$emoji $label",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = cor
-        )
+        Text("$emoji $label", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = cor)
 
-        // Nível
-        Text(
-            "Nível",
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        Text("Nível", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             IconButton(onClick = onNivelMenos, modifier = Modifier.size(32.dp)) {
                 Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = cor)
             }
-            Text(
-                nivel.toString(),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = cor
-            )
+            Text(nivel.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = cor)
             IconButton(onClick = onNivelMais, modifier = Modifier.size(32.dp)) {
                 Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = cor)
             }
         }
 
-        Divider(color = cor.copy(alpha = 0.3f))
+        HorizontalDivider(color = cor.copy(alpha = 0.3f))
 
-        // Pontos
-        Text(
-            "Pontos",
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        Text("Pontos", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             IconButton(onClick = onPontosMenos, modifier = Modifier.size(32.dp)) {
                 Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = cor)
             }
-            Text(
-                "$pontos/$nivel",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = cor
-            )
+            Text("$pontos/$nivel", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = cor)
             IconButton(onClick = onPontosMais, modifier = Modifier.size(32.dp)) {
                 Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = cor)
             }

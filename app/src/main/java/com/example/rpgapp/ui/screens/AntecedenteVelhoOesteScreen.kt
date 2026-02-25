@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rpgapp.data.entity.AntecedenteVelhoOesteEntity
 import com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel
+import com.example.rpgapp.ui.theme.AppTextFieldDefaults
 
 @Composable
 fun AntecedentesVelhoOesteScreen(
@@ -41,7 +42,6 @@ fun AntecedentesVelhoOesteScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        // Header com título
         Text(
             "▸ ANTECEDENTES",
             style = MaterialTheme.typography.headlineSmall,
@@ -57,7 +57,6 @@ fun AntecedentesVelhoOesteScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Botões lado a lado
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -93,7 +92,7 @@ fun AntecedentesVelhoOesteScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant  // Mesma cor dos outros cards
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Column(
@@ -150,7 +149,7 @@ fun AntecedenteCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant  // Mesma cor dos outros cards
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -178,7 +177,6 @@ fun AntecedenteCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Botões - e +
                 IconButton(
                     onClick = {
                         if (antecedente.pontos > 0) {
@@ -190,7 +188,6 @@ fun AntecedenteCard(
                     Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
 
-                // Número de pontos
                 Text(
                     antecedente.pontos.toString(),
                     style = MaterialTheme.typography.titleLarge,
@@ -206,7 +203,6 @@ fun AntecedenteCard(
                     Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
 
-                // Deletar
                 IconButton(
                     onClick = onDelete,
                     modifier = Modifier.size(36.dp)
@@ -239,7 +235,8 @@ fun AntecedenteDialog(
                     value = nome,
                     onValueChange = { nome = it },
                     label = { Text("Nome") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = AppTextFieldDefaults.colors()
                 )
             }
         },
