@@ -1,4 +1,4 @@
-package com.example.rpgapp.ui.screens.velhooeste
+package com.example.rpgapp.ui.screens
 
 import android.content.Context
 import android.media.MediaPlayer
@@ -29,13 +29,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
-import com.example.rpgapp.ui.screens.*
+import com.example.rpgapp.ui.screens.AntecedentesVelhoOesteScreen
+import com.example.rpgapp.ui.screens.DescricaoVelhoOesteScreen
+import com.example.rpgapp.ui.screens.EquipamentoVelhoOesteScreen
+import com.example.rpgapp.ui.screens.HabilidadesVelhoOesteScreen
+import com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
 fun FichaVelhoOesteScreen(
-    viewModel: com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel,
+    viewModel: FichaVelhoOesteViewModel,
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {
@@ -181,7 +185,7 @@ fun FichaVelhoOesteTab(
     onVidaAtualChange: (Int) -> Unit,
     onDorAtualChange: (Int) -> Unit,
     onSelosBonusChange: (Int) -> Unit,
-    viewModel: com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel,
+    viewModel: FichaVelhoOesteViewModel,
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {

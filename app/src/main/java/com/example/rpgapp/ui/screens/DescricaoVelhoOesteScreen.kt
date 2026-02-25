@@ -1,4 +1,4 @@
-package com.example.rpgapp.ui.screens.velhooeste
+package com.example.rpgapp.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*

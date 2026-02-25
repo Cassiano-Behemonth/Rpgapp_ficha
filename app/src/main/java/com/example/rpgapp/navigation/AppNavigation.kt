@@ -7,9 +7,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import com.example.rpgapp.ui.screens.*
-import com.example.rpgapp.ui.screens.velhooeste.FichaVelhoOesteScreen
+import com.example.rpgapp.ui.screens.FichaVelhoOesteScreen
+import com.example.rpgapp.ui.screens.FichaAssimilacaoScreen
 import com.example.rpgapp.viewmodel.FichaViewModel
 import com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel
+import com.example.rpgapp.viewmodel.FichaAssimilacaoViewModel
 
 @Composable
 fun AppNavigation(
@@ -21,7 +23,7 @@ fun AppNavigation(
     val nav = rememberNavController()
     val context = LocalContext.current
 
-    // ViewModels para ambos os modos
+    // ViewModels para todos os modos
     val viewModelHorror: FichaViewModel = viewModel(
         factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
             context.applicationContext as android.app.Application
@@ -34,24 +36,31 @@ fun AppNavigation(
         )
     )
 
+    val viewModelAssimilacao: FichaAssimilacaoViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
+            context.applicationContext as android.app.Application
+        )
+    )
+
     // Define a rota inicial baseada no modo selecionado (só na primeira composição)
     val startDestination = remember {
         when (currentMode) {
             GameMode.INVESTIGACAO_HORROR -> "ficha_horror"
             GameMode.VELHO_OESTE -> "ficha_oeste"
+            GameMode.ASSIMILACAO -> "ficha_assimilacao"
             null -> "theme_selector"
         }
     }
 
     NavHost(navController = nav, startDestination = startDestination) {
-        // Tela de seleção de tema
+
+        // ── Tela de seleção de tema ──────────────────────────
         composable("theme_selector") {
             ThemeSelectorScreen(
                 currentTheme = currentTheme,
                 currentMode = currentMode,
                 onThemeSelected = { theme ->
                     onThemeChange(theme)
-                    // Retorna para o modo que estava selecionado
                     when (currentMode) {
                         GameMode.INVESTIGACAO_HORROR -> {
                             nav.navigate("ficha_horror") {
@@ -60,6 +69,11 @@ fun AppNavigation(
                         }
                         GameMode.VELHO_OESTE -> {
                             nav.navigate("ficha_oeste") {
+                                popUpTo("theme_selector") { inclusive = true }
+                            }
+                        }
+                        GameMode.ASSIMILACAO -> {
+                            nav.navigate("ficha_assimilacao") {
                                 popUpTo("theme_selector") { inclusive = true }
                             }
                         }
@@ -73,13 +87,12 @@ fun AppNavigation(
             )
         }
 
-        // Tela de seleção de modo de jogo
+        // ── Tela de seleção de modo de jogo ──────────────────
         composable("game_mode_selector") {
             GameModeSelectorScreen(
                 currentMode = currentMode,
                 onModeSelected = { mode ->
-                    onModeChange(mode) // Define o novo modo
-                    // Navega para a ficha do modo selecionado
+                    onModeChange(mode)
                     when (mode) {
                         GameMode.INVESTIGACAO_HORROR -> {
                             nav.navigate("ficha_horror") {
@@ -91,12 +104,17 @@ fun AppNavigation(
                                 popUpTo("game_mode_selector") { inclusive = true }
                             }
                         }
+                        GameMode.ASSIMILACAO -> {
+                            nav.navigate("ficha_assimilacao") {
+                                popUpTo("game_mode_selector") { inclusive = true }
+                            }
+                        }
                     }
                 }
             )
         }
 
-        // Ficha Investigação Horror
+        // ── Ficha Investigação Horror ────────────────────────
         composable("ficha_horror") {
             FichaRpgScreen(
                 onSalvar = {},
@@ -113,7 +131,7 @@ fun AppNavigation(
             )
         }
 
-        // Ficha Velho Oeste
+        // ── Ficha Velho Oeste ────────────────────────────────
         composable("ficha_oeste") {
             FichaVelhoOesteScreen(
                 viewModel = viewModelOeste,
@@ -121,6 +139,19 @@ fun AppNavigation(
                 onModeChange = {
                     nav.navigate("game_mode_selector") {
                         popUpTo("ficha_oeste") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ── Ficha Assimilação ────────────────────────────────
+        composable("ficha_assimilacao") {
+            FichaAssimilacaoScreen(
+                viewModel = viewModelAssimilacao,
+                onThemeChange = { nav.navigate("theme_selector") },
+                onModeChange = {
+                    nav.navigate("game_mode_selector") {
+                        popUpTo("ficha_assimilacao") { inclusive = true }
                     }
                 }
             )

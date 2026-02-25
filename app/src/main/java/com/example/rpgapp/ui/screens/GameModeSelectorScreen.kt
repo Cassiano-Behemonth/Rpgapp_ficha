@@ -91,6 +91,22 @@ fun GameModeSelectorScreen(
             onClick = { onModeSelected(GameMode.VELHO_OESTE) }
         )
 
+        // Card Assimilação
+        GameModeCard(
+            title = "🧬 ASSIMILAÇÃO",
+            description = "RPG pós-apocalíptico de sobrevivência e mutação",
+            features = listOf(
+                "Aptidões: Instintos, Conhecimentos e Práticas",
+                "Cabo de Guerra: Determinação vs Assimilação",
+                "Sistema de Saúde narrativo em 6 condições",
+                "Mutações e Características únicas"
+            ),
+            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF0D3D2E)),
+            accentColor = Color(0xFF00BFA5),
+            isSelected = currentMode == GameMode.ASSIMILACAO,
+            onClick = { onModeSelected(GameMode.ASSIMILACAO) }
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
