@@ -62,10 +62,15 @@ class MainActivity : ComponentActivity() {
                     AppTheme.ASSIMILACAO  -> Color(0xFF080C08)
                 }
 
+                val lightBars = when (currentTheme) {
+                    AppTheme.FANTASIA, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true
+                    else -> false
+                }
+
                 // Status bar
-                window.statusBarColor = barColor.toArgb()
+                window.statusBarColor = statusBarColor.toArgb()
                 // Navigation bar (barra de baixo) — mesma cor do tema
-                window.navigationBarColor = barColor.toArgb()
+                window.navigationBarColor = statusBarColor.toArgb()
 
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 // Ícones da status bar
