@@ -32,7 +32,7 @@ fun MagiasFantasiaScreen(
     var magiaToEdit by remember { mutableStateOf<MagiaFantasiaEntity?>(null) }
     var circuloFiltro by remember { mutableStateOf(-1) } // -1 = Todos
     var atributoChave by remember { mutableStateOf("INT") }
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
+    val historicoRolagens by viewModel.historicoRolagens.collectAsState()
     var dadoCustom by remember { mutableStateOf("") }
 
     // Agrupa magias por círculo
