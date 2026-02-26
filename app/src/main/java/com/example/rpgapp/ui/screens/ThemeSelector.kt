@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 
 enum class AppTheme {
     GREEN_BLACK,
-    RED_WHITE,
+    FANTASIA,
     GOLD_BLACK,
     PURPLE_GRAY,
     BLUE_WHITE,
@@ -36,7 +36,8 @@ fun ThemeSelectorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A1A))
+            .background(Color(0xFF0D0D0D))
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,12 +70,12 @@ fun ThemeSelectorScreen(
         )
 
         ThemeCard(
-            title = "Vermelho e Branco",
-            subtitle = "Contraste claro",
+            title = "🐉 Fantasia",
+            subtitle = "Aventuras épicas",
             primaryColor = Color(0xFFE53935),
             backgroundColor = Color.White,
-            isSelected = currentTheme == AppTheme.RED_WHITE,
-            onClick = { onThemeSelected(AppTheme.RED_WHITE) }
+            isSelected = currentTheme == AppTheme.FANTASIA,
+            onClick = { onThemeSelected(AppTheme.FANTASIA) }
         )
 
         ThemeCard(

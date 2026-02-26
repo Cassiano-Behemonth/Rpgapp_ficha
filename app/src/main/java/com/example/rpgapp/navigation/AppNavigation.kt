@@ -12,6 +12,7 @@ import com.example.rpgapp.ui.screens.FichaAssimilacaoScreen
 import com.example.rpgapp.viewmodel.FichaViewModel
 import com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel
 import com.example.rpgapp.viewmodel.FichaAssimilacaoViewModel
+import com.example.rpgapp.viewmodel.FichaFantasiaViewModel
 
 @Composable
 fun AppNavigation(
@@ -42,12 +43,19 @@ fun AppNavigation(
         )
     )
 
+    val viewModelFantasia: FichaFantasiaViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
+            context.applicationContext as android.app.Application
+        )
+    )
+
     // Define a rota inicial baseada no modo selecionado (só na primeira composição)
     val startDestination = remember {
         when (currentMode) {
             GameMode.INVESTIGACAO_HORROR -> "ficha_horror"
             GameMode.VELHO_OESTE -> "ficha_oeste"
             GameMode.ASSIMILACAO -> "ficha_assimilacao"
+            GameMode.FANTASIA -> "ficha_fantasia"
             null -> "theme_selector"
         }
     }
@@ -74,6 +82,11 @@ fun AppNavigation(
                         }
                         GameMode.ASSIMILACAO -> {
                             nav.navigate("ficha_assimilacao") {
+                                popUpTo("theme_selector") { inclusive = true }
+                            }
+                        }
+                        GameMode.FANTASIA -> {
+                            nav.navigate("ficha_fantasia") {
                                 popUpTo("theme_selector") { inclusive = true }
                             }
                         }
@@ -106,6 +119,11 @@ fun AppNavigation(
                         }
                         GameMode.ASSIMILACAO -> {
                             nav.navigate("ficha_assimilacao") {
+                                popUpTo("game_mode_selector") { inclusive = true }
+                            }
+                        }
+                        GameMode.FANTASIA -> {
+                            nav.navigate("ficha_fantasia") {
                                 popUpTo("game_mode_selector") { inclusive = true }
                             }
                         }
@@ -152,6 +170,23 @@ fun AppNavigation(
                 onModeChange = {
                     nav.navigate("game_mode_selector") {
                         popUpTo("ficha_assimilacao") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ── Ficha Fantasia ───────────────────────────────────
+        composable("ficha_fantasia") {
+            FichaFantasiaScreen(
+                onSalvar = {},
+                onInventario = {},
+                onDescricao = {},
+                onPericias = {},
+                viewModel = viewModelFantasia,
+                onThemeChange = { nav.navigate("theme_selector") },
+                onModeChange = {
+                    nav.navigate("game_mode_selector") {
+                        popUpTo("ficha_fantasia") { inclusive = true }
                     }
                 }
             )

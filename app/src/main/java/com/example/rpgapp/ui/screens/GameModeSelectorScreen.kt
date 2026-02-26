@@ -27,6 +27,7 @@ fun GameModeSelectorScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0A0A0A))
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,6 +106,22 @@ fun GameModeSelectorScreen(
             accentColor = Color(0xFF00BFA5),
             isSelected = currentMode == GameMode.ASSIMILACAO,
             onClick = { onModeSelected(GameMode.ASSIMILACAO) }
+        )
+
+        // Card Fantasia
+        GameModeCard(
+            title = "🐉 FANTASIA",
+            description = "Aventuras épicas em um mundo de magia e monstros",
+            features = listOf(
+                "Atributos: FOR, DES, CON, INT, SAB, CAR",
+                "Magias, Habilidades e Inventário detalhado",
+                "Sistema de classes e raças",
+                "Rolagens baseadas em d20"
+            ),
+            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF4D0000)),
+            accentColor = Color(0xFFE53935),
+            isSelected = currentMode == GameMode.FANTASIA,
+            onClick = { onModeSelected(GameMode.FANTASIA) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))

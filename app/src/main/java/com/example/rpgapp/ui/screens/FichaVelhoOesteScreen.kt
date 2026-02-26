@@ -92,6 +92,7 @@ fun FichaVelhoOesteScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         ScrollableTabRow(

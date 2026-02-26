@@ -216,15 +216,14 @@ fun AptidaoRow(
                     cor = cor,
                     tipo = tipo,
                     onClick = {
-                        // Clica no símbolo i:
-                        // se já está preenchido e é o último → diminui
-                        // senão → define o valor como i
-                        if (preenchido && i == valor && valor > min) {
-                            onValorChange(valor - 1)
-                        } else if (!preenchido) {
+                        if (preenchido) {
+                            // Clicou num símbolo preenchido:
+                            // define o valor para i-1 (remove até esse ponto, pode ser vários)
+                            val novoValor = (i - 1).coerceAtLeast(min)
+                            if (novoValor != valor) onValorChange(novoValor)
+                        } else {
+                            // Clicou num símbolo vazio: preenche até esse ponto
                             onValorChange(i)
-                        } else if (preenchido && i == valor && valor == min) {
-                            // no mínimo, não faz nada
                         }
                     }
                 )

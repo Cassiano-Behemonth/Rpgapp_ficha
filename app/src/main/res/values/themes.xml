@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Rpgapp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Rpgapp" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Fundo preto durante o carregamento — elimina o flash branco/claro -->
+        <item name="android:windowBackground">@color/black</item>
+        <!-- Barras transparentes para edge-to-edge funcionar com enableEdgeToEdge() no código -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
 </resources>

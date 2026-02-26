@@ -13,11 +13,11 @@ private val GreenBlack_Background = Color(0xFF000000)
 private val GreenBlack_Surface = Color(0xFF121212)
 
 // Vermelho e Branco
-private val RedWhite_Primary = Color(0xFFE53935)
-private val RedWhite_Light = Color(0xFFEF5350)
-private val RedWhite_Dark = Color(0xFFC62828)
-private val RedWhite_Background = Color(0xFFFAFAFA)
-private val RedWhite_Surface = Color(0xFFFFFFFF)
+private val Fantasia_Primary = Color(0xFFE53935)
+private val Fantasia_Light = Color(0xFFEF5350)
+private val Fantasia_Dark = Color(0xFFC62828)
+private val Fantasia_Background = Color(0xFFFAFAFA)
+private val Fantasia_Surface = Color(0xFFFFFFFF)
 
 // Dourado e Preto
 private val GoldBlack_Primary = Color(0xFFFFC107)
@@ -84,23 +84,23 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
             inverseOnSurface = Color.Black
         )
 
-        AppTheme.RED_WHITE -> lightColorScheme(
-            primary = RedWhite_Primary,
+        AppTheme.FANTASIA -> lightColorScheme(
+            primary = Fantasia_Primary,
             onPrimary = Color.White,
-            primaryContainer = RedWhite_Light,
-            onPrimaryContainer = RedWhite_Dark,
+            primaryContainer = Fantasia_Light,
+            onPrimaryContainer = Fantasia_Dark,
             secondary = Color(0xFFD32F2F),
             onSecondary = Color.White,
-            background = RedWhite_Background,
+            background = Fantasia_Background,
             onBackground = Color(0xFF212121),
-            surface = RedWhite_Surface,
-            onSurface = RedWhite_Primary,
+            surface = Fantasia_Surface,
+            onSurface = Fantasia_Primary,
             surfaceVariant = Color(0xFFF5F5F5),
             onSurfaceVariant = Color(0xFF424242),
-            surfaceContainer = RedWhite_Surface,
+            surfaceContainer = Fantasia_Surface,
             error = Color(0xFFB71C1C),
-            outline = RedWhite_Dark,
-            inverseSurface = RedWhite_Primary,
+            outline = Fantasia_Dark,
+            inverseSurface = Fantasia_Primary,
             inverseOnSurface = Color.White
         )
 

@@ -204,6 +204,126 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+/**
+ * MIGRATION 5 -> 6
+ * Adiciona todas as tabelas do modo Fantasia (Tormenta):
+ * - fichas_fantasia
+ * - pericias_fantasia
+ * - itens_fantasia
+ * - habilidades_fantasia
+ * - magias_fantasia
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS fichas_fantasia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                forca INTEGER NOT NULL DEFAULT 10,
+                destreza INTEGER NOT NULL DEFAULT 10,
+                constituicao INTEGER NOT NULL DEFAULT 10,
+                inteligencia INTEGER NOT NULL DEFAULT 10,
+                sabedoria INTEGER NOT NULL DEFAULT 10,
+                carisma INTEGER NOT NULL DEFAULT 10,
+                vidaAtual INTEGER NOT NULL DEFAULT 0,
+                vidaMax INTEGER NOT NULL DEFAULT 0,
+                manaAtual INTEGER NOT NULL DEFAULT 0,
+                manaMax INTEGER NOT NULL DEFAULT 0,
+                nivel INTEGER NOT NULL DEFAULT 1,
+                xp INTEGER NOT NULL DEFAULT 0,
+                bonusDefesa INTEGER NOT NULL DEFAULT 0,
+                bonusFortitude INTEGER NOT NULL DEFAULT 0,
+                bonusReflexos INTEGER NOT NULL DEFAULT 0,
+                bonusVontade INTEGER NOT NULL DEFAULT 0,
+                deslocamento TEXT NOT NULL DEFAULT '9m',
+                tamanho TEXT NOT NULL DEFAULT 'Médio',
+                penalidade_armadura INTEGER NOT NULL DEFAULT 0,
+                limiteCargaBonus INTEGER NOT NULL DEFAULT 0,
+                dinheiro TEXT NOT NULL DEFAULT '0',
+                nome TEXT NOT NULL DEFAULT '',
+                jogador TEXT NOT NULL DEFAULT '',
+                raca TEXT NOT NULL DEFAULT '',
+                origem TEXT NOT NULL DEFAULT '',
+                divindade TEXT NOT NULL DEFAULT '',
+                classes TEXT NOT NULL DEFAULT '',
+                aparencia TEXT NOT NULL DEFAULT '',
+                personalidade TEXT NOT NULL DEFAULT '',
+                historia TEXT NOT NULL DEFAULT '',
+                anotacoes TEXT NOT NULL DEFAULT ''
+            )
+        """)
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS pericias_fantasia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                fichaId INTEGER NOT NULL DEFAULT 0,
+                nome TEXT NOT NULL,
+                atributo TEXT NOT NULL,
+                treinada INTEGER NOT NULL DEFAULT 0,
+                vantagem INTEGER NOT NULL DEFAULT 0,
+                desvantagem INTEGER NOT NULL DEFAULT 0,
+                bonus INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS itens_fantasia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                fichaId INTEGER NOT NULL DEFAULT 0,
+                nome TEXT NOT NULL,
+                quantidade TEXT NOT NULL DEFAULT '1',
+                descricao TEXT NOT NULL DEFAULT '',
+                slots INTEGER NOT NULL DEFAULT 1,
+                bonusDefesa INTEGER NOT NULL DEFAULT 0,
+                bonusFortitude INTEGER NOT NULL DEFAULT 0,
+                bonusReflexos INTEGER NOT NULL DEFAULT 0,
+                bonusVontade INTEGER NOT NULL DEFAULT 0,
+                bonusAtributo TEXT NOT NULL DEFAULT '',
+                tipo TEXT NOT NULL DEFAULT 'Geral',
+                acerto TEXT NOT NULL DEFAULT '',
+                dano TEXT NOT NULL DEFAULT ''
+            )
+        """)
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS habilidades_fantasia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                fichaId INTEGER NOT NULL DEFAULT 0,
+                nome TEXT NOT NULL,
+                categoria TEXT NOT NULL,
+                descricao TEXT NOT NULL DEFAULT '',
+                custoPM INTEGER NOT NULL DEFAULT 0,
+                requisitos TEXT NOT NULL DEFAULT '',
+                acao TEXT NOT NULL DEFAULT '',
+                alcance TEXT NOT NULL DEFAULT '',
+                duracao TEXT NOT NULL DEFAULT '',
+                acerto TEXT NOT NULL DEFAULT '',
+                dano TEXT NOT NULL DEFAULT ''
+            )
+        """)
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS magias_fantasia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                fichaId INTEGER NOT NULL DEFAULT 0,
+                nome TEXT NOT NULL,
+                escola TEXT NOT NULL DEFAULT '',
+                circulo INTEGER NOT NULL DEFAULT 1,
+                execucao TEXT NOT NULL DEFAULT '',
+                alcance TEXT NOT NULL DEFAULT '',
+                area TEXT NOT NULL DEFAULT '',
+                duracao TEXT NOT NULL DEFAULT '',
+                resistencia TEXT NOT NULL DEFAULT '',
+                atributoChave TEXT NOT NULL DEFAULT 'INT',
+                efeito TEXT NOT NULL DEFAULT '',
+                componentes TEXT NOT NULL DEFAULT '',
+                acerto TEXT NOT NULL DEFAULT '',
+                dano TEXT NOT NULL DEFAULT ''
+            )
+        """)
+    }
+}
+
+
 @Database(
     entities = [
         // ── Modo Horror ──────────────────────────
@@ -219,9 +339,15 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         FichaAssimilacaoEntity::class,
         AssimilacaoEntity::class,
         ItemAssimilacaoEntity::class,
-        CaracteristicaAssimilacaoEntity::class
+        CaracteristicaAssimilacaoEntity::class,
+        // ── Modo Fantasia (Tormenta) ─────────────
+        FichaFantasiaEntity::class,
+        PericiaFantasiaEntity::class,
+        ItemFantasiaEntity::class,
+        HabilidadeFantasiaEntity::class,
+        MagiaFantasiaEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -239,6 +365,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun assimilacaoDao(): AssimilacaoDao
     abstract fun itemAssimilacaoDao(): ItemAssimilacaoDao
     abstract fun caracteristicaAssimilacaoDao(): CaracteristicaAssimilacaoDao
+    // ── Modo Fantasia ────────────────────────────
+    abstract fun fichaFantasiaDao(): FichaFantasiaDao
+    abstract fun periciaFantasiaDao(): PericiaFantasiaDao
+    abstract fun itemFantasiaDao(): ItemFantasiaDao
+    abstract fun habilidadeFantasiaDao(): HabilidadeFantasiaDao
+    abstract fun magiaFantasiaDao(): MagiaFantasiaDao
 
     companion object {
         @Volatile
@@ -255,7 +387,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_1_2,
                         MIGRATION_2_3,
                         MIGRATION_3_4,
-                        MIGRATION_4_5
+                        MIGRATION_4_5,
+                        MIGRATION_5_6
                     )
                     .fallbackToDestructiveMigration()
                     .build()
