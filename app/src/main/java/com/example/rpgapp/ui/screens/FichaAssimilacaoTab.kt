@@ -111,7 +111,7 @@ fun FichaAssimilacaoTab(
             SaudeProgressivaCard(
                 nivelAtivo    = nivelAtivo,
                 pontosAtivo   = pontosAtivo,
-                maxPontos     = maxPontosNivel,   // ← usa o valor real salvo
+                maxPontos     = maxPontosNivel,
                 totalPontos   = f.pontosNivel6 + f.pontosNivel5 + f.pontosNivel4 +
                         f.pontosNivel3 + f.pontosNivel2 + f.pontosNivel1,
                 totalMax      = maxPontosNivel * 6,
@@ -121,17 +121,50 @@ fun FichaAssimilacaoTab(
                     }
                 },
                 onCura = {
-                    if (pontosAtivo < maxPontosNivel) {
-                        // Cura dentro do nível atual
-                        viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo + 1)
-                    } else if (nivelAtivo < 6) {
-                        // Nível atual cheio — restaura o nível acima com valor máximo real
-                        viewModel.atualizarSaudeNivel(nivelAtivo + 1, maxPontosNivel)
+                    when {
+                        nivelAtivo == 0 && nivelAtivo < 6 -> {
+                            viewModel.atualizarSaudeNivel(1, 1)
+                        }
+                        pontosAtivo < maxPontosNivel -> {
+                            viewModel.atualizarSaudeNivel(nivelAtivo, pontosAtivo + 1)
+                        }
+                        nivelAtivo < 6 -> {
+                            viewModel.atualizarSaudeNivel(nivelAtivo + 1, 1)
+                        }
+                    }
+                },
+                onDanoNivel = {
+                    // Remove o nível inteiro: zera pontos do nível atual e desce
+                    when {
+                        nivelAtivo > 1 -> {
+                            // Zera o nível atual e desce para o anterior com 0 pontos
+                            viewModel.atualizarSaudeNivel(nivelAtivo, 0)
+                        }
+                        nivelAtivo == 1 -> {
+                            // Nível 1 com dano total → vai para morto (nivel 0)
+                            viewModel.atualizarSaudeNivel(1, 0)
+                        }
+                        // nivelAtivo == 0 → já morto, não faz nada
+                    }
+                },
+                onCuraNivel = {
+                    // Restaura nível inteiro: enche o próximo nível completamente
+                    when {
+                        nivelAtivo == 0 -> {
+                            // Morto → restaura nível 1 completo
+                            viewModel.atualizarSaudeNivel(1, maxPontosNivel)
+                        }
+                        nivelAtivo < 6 -> {
+                            // Enche o nível atual e sobe para o próximo completo
+                            viewModel.atualizarSaudeNivel(nivelAtivo + 1, maxPontosNivel)
+                        }
+                        nivelAtivo == 6 -> {
+                            // Já no máximo, enche o nível 6 completamente
+                            viewModel.atualizarSaudeNivel(6, maxPontosNivel)
+                        }
                     }
                 },
                 onMaxChange = { novoMax ->
-                    // Função atômica — max e pontos num único update
-                    // Duas chamadas separadas causam race condition
                     viewModel.atualizarMaxESaude(novoMax)
                 }
             )
@@ -180,6 +213,8 @@ fun SaudeProgressivaCard(
     totalMax: Int,
     onDano: () -> Unit,
     onCura: () -> Unit,
+    onDanoNivel: () -> Unit,
+    onCuraNivel: () -> Unit,
     onMaxChange: (Int) -> Unit
 ) {
     val condicaoAtual = condicoesSaude.find { it.nivel == nivelAtivo }
@@ -262,14 +297,24 @@ fun SaudeProgressivaCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Botões dano / cura
+            // Linha única: << | − DANO | + CURA | >>
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // << remove nível inteiro
+                IconButton(onClick = onDanoNivel) {
+                    Text(
+                        "«",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
                 FilledTonalButton(
                     onClick = onDano,
                     colors = ButtonDefaults.filledTonalButtonColors(
@@ -279,15 +324,27 @@ fun SaudeProgressivaCard(
                 ) {
                     Text("− DANO", fontWeight = FontWeight.Bold)
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                // Quando morto (nível 0), botão de cura fica roxo; senão, sempre verde
+                val corCura = if (nivelAtivo == 0) Color(0xFF7B1FA2) else Color(0xFF43A047)
                 FilledTonalButton(
                     onClick = onCura,
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = corAtual.copy(alpha = 0.15f),
-                        contentColor   = corAtual
+                        containerColor = corCura.copy(alpha = 0.15f),
+                        contentColor   = corCura
                     )
                 ) {
                     Text("+ CURA", fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                // >> restaura nível inteiro
+                IconButton(onClick = onCuraNivel) {
+                    Text(
+                        "»",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF43A047)
+                    )
                 }
             }
 

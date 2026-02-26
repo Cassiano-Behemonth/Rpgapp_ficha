@@ -27,6 +27,7 @@ fun GameModeSelectorScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0A0A0A))
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,

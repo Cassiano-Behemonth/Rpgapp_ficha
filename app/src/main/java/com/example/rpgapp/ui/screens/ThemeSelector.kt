@@ -36,7 +36,8 @@ fun ThemeSelectorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A1A))
+            .background(Color(0xFF0D0D0D))
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,

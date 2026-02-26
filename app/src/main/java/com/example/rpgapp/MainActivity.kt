@@ -18,8 +18,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Permite que o conteúdo vá até as bordas
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Edge-to-edge nativo — substitui setDecorFitsSystemWindows
+        enableEdgeToEdge()
 
         setContent {
             val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
@@ -50,26 +50,33 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            // Atualiza a cor da barra de status baseada no tema
+            // Atualiza as barras de sistema baseado no tema
             LaunchedEffect(currentTheme) {
-                val statusBarColor = when (currentTheme) {
+                val lightBars = when (currentTheme) {
+                    AppTheme.RED_WHITE, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true
+                    else -> false
+                }
+
+                val barColor = when (currentTheme) {
                     AppTheme.GREEN_BLACK  -> Color.Black
                     AppTheme.RED_WHITE    -> Color(0xFFFAFAFA)
                     AppTheme.GOLD_BLACK   -> Color.Black
                     AppTheme.PURPLE_GRAY  -> Color.Black
                     AppTheme.BLUE_WHITE   -> Color(0xFFFAFAFA)
                     AppTheme.WILD_WEST    -> Color(0xFFFFF8DC)
-                    AppTheme.ASSIMILACAO  -> Color(0xFF080C08)  // Preto esverdeado
+                    AppTheme.ASSIMILACAO  -> Color(0xFF080C08)
                 }
 
-                window.statusBarColor = statusBarColor.toArgb()
+                // Status bar
+                window.statusBarColor = barColor.toArgb()
+                // Navigation bar (barra de baixo) — mesma cor do tema
+                window.navigationBarColor = barColor.toArgb()
 
-                // Define se os ícones da status bar devem ser escuros ou claros
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-                insetsController.isAppearanceLightStatusBars = when (currentTheme) {
-                    AppTheme.RED_WHITE, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true
-                    else -> false  // Ícones claros para temas escuros (incluindo ASSIMILACAO)
-                }
+                // Ícones da status bar
+                insetsController.isAppearanceLightStatusBars = lightBars
+                // Ícones da navigation bar
+                insetsController.isAppearanceLightNavigationBars = lightBars
             }
 
             RpgTheme(theme = currentTheme) {
