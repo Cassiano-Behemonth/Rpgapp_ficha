@@ -28,8 +28,6 @@ fun InventarioFantasiaScreen(
     val ficha by viewModel.ficha.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<ItemFantasiaEntity?>(null) }
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
-    var dadoCustom by remember { mutableStateOf("") }
 
     val slotsUsados = itens.sumOf { it.slotsTotal() }
     val limiteSlots = ficha?.limiteCarga() ?: 0
@@ -123,61 +121,6 @@ fun InventarioFantasiaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Sistema de rolagem de dados
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        "🎲 ROLAGEM DE DADOS",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = dadoCustom,
-                            onValueChange = { dadoCustom = it },
-                            label = { Text("Ex: 2d6+3, 1d20", fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        Button(onClick = {
-                            val (resultado, texto) = DiceRoller.rolarCustom(dadoCustom)
-                            if (resultado > 0) {
-                                historicoRolagens = listOf(texto) + historicoRolagens.take(4)
-                            }
-                        }) {
-                            Text("Rolar")
-                        }
-                    }
-
-                    if (historicoRolagens.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Últimas Rolagens:",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        historicoRolagens.take(3).forEach { rolagem ->
-                            Text(
-                                "▹ $rolagem",
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(vertical = 2.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -223,19 +166,7 @@ fun InventarioFantasiaScreen(
                         ItemFantasiaCard(
                             item = item,
                             onEdit = { itemToEdit = item },
-                            onDelete = { viewModel.deletarItem(item) },
-                            onRolarAcerto = { acerto ->
-                                val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
-                                if (resultado > 0) {
-                                    historicoRolagens = listOf("${item.nome} - $texto") + historicoRolagens.take(4)
-                                }
-                            },
-                            onRolarDano = { dano ->
-                                val (resultado, texto) = DiceRoller.rolarDano(dano)
-                                if (resultado > 0) {
-                                    historicoRolagens = listOf("${item.nome} - $texto") + historicoRolagens.take(4)
-                                }
-                            }
+                            onDelete = { viewModel.deletarItem(item) }
                         )
                     }
                 }
@@ -247,8 +178,8 @@ fun InventarioFantasiaScreen(
                 title = "Adicionar Item",
                 item = null,
                 onDismiss = { showAddDialog = false },
-                onConfirm = { nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo, acerto, dano ->
-                    viewModel.adicionarItem(nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo, acerto, dano)
+                onConfirm = { nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo ->
+                    viewModel.adicionarItem(nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo)
                     showAddDialog = false
                 }
             )
@@ -259,7 +190,7 @@ fun InventarioFantasiaScreen(
                 title = "Editar Item",
                 item = item,
                 onDismiss = { itemToEdit = null },
-                onConfirm = { nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo, acerto, dano ->
+                onConfirm = { nome, quantidade, descricao, slots, bonusDefesa, bonusFort, bonusRef, bonusVont, bonusAtributo, tipo ->
                     viewModel.atualizarItem(
                         item.copy(
                             nome = nome,
@@ -271,9 +202,7 @@ fun InventarioFantasiaScreen(
                             bonusReflexos = bonusRef,
                             bonusVontade = bonusVont,
                             bonusAtributo = bonusAtributo,
-                            tipo = tipo,
-                            acerto = acerto,
-                            dano = dano
+                            tipo = tipo
                         )
                     )
                     itemToEdit = null
@@ -287,9 +216,7 @@ fun InventarioFantasiaScreen(
 fun ItemFantasiaCard(
     item: ItemFantasiaEntity,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onRolarAcerto: (String) -> Unit,
-    onRolarDano: (String) -> Unit
+    onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -409,30 +336,6 @@ fun ItemFantasiaCard(
                 }
             }
 
-            // Botões de rolagem de acerto e dano
-            if (item.acerto.isNotBlank() || item.dano.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (item.acerto.isNotBlank()) {
-                        FilledTonalButton(
-                            onClick = { onRolarAcerto(item.acerto) },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("🎯 Acerto: ${item.acerto}", fontSize = 12.sp)
-                        }
-                    }
-                    if (item.dano.isNotBlank()) {
-                        FilledTonalButton(
-                            onClick = { onRolarDano(item.dano) },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Lançar: ${item.dano}", fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
 
             if (item.descricao.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -451,7 +354,7 @@ fun ItemFantasiaDialog(
     title: String,
     item: ItemFantasiaEntity?,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, Int, Int, Int, Int, Int, String, String, String, String) -> Unit
+    onConfirm: (String, String, String, Int, Int, Int, Int, Int, String, String) -> Unit
 ) {
     var nome by remember { mutableStateOf(item?.nome ?: "") }
     var quantidade by remember { mutableStateOf(item?.quantidade ?: "1") }
@@ -463,8 +366,6 @@ fun ItemFantasiaDialog(
     var bonusVontade by remember { mutableStateOf(item?.bonusVontade?.toString() ?: "0") }
     var bonusAtributo by remember { mutableStateOf(item?.bonusAtributo ?: "") }
     var tipo by remember { mutableStateOf(item?.tipo ?: "Geral") }
-    var acerto by remember { mutableStateOf(item?.acerto ?: "") }
-    var dano by remember { mutableStateOf(item?.dano ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -583,37 +484,6 @@ fun ItemFantasiaDialog(
                     placeholder = { Text("Ex: FOR+2 ou DES-1") }
                 )
 
-                HorizontalDivider()
-
-                Text(
-                    "Rolagens",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = acerto,
-                        onValueChange = { acerto = it },
-                        label = { Text("Acerto") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        placeholder = { Text("1d20") }
-                    )
-
-                    OutlinedTextField(
-                        value = dano,
-                        onValueChange = { dano = it },
-                        label = { Text("Dano/Cura..") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        placeholder = { Text("1d6+2") }
-                    )
-                }
 
                 OutlinedTextField(
                     value = descricao,
@@ -640,9 +510,7 @@ fun ItemFantasiaDialog(
                             bonusReflexos.toIntOrNull() ?: 0,
                             bonusVontade.toIntOrNull() ?: 0,
                             bonusAtributo,
-                            tipo,
-                            acerto,
-                            dano
+                            tipo
                         )
                     }
                 },

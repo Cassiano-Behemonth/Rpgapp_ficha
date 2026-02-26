@@ -269,8 +269,8 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
         bonusVontade: Int,
         bonusAtributo: String,
         tipo: String,
-        acerto: String,
-        dano: String
+        acerto: String = "",
+        dano: String = ""
     ) {
         viewModelScope.launch {
             itemDao.insertItem(

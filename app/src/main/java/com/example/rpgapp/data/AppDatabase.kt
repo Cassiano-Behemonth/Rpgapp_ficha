@@ -218,106 +218,109 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS fichas_fantasia (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                forca INTEGER NOT NULL DEFAULT 10,
-                destreza INTEGER NOT NULL DEFAULT 10,
-                constituicao INTEGER NOT NULL DEFAULT 10,
-                inteligencia INTEGER NOT NULL DEFAULT 10,
-                sabedoria INTEGER NOT NULL DEFAULT 10,
-                carisma INTEGER NOT NULL DEFAULT 10,
-                vidaAtual INTEGER NOT NULL DEFAULT 0,
-                vidaMax INTEGER NOT NULL DEFAULT 0,
-                manaAtual INTEGER NOT NULL DEFAULT 0,
-                manaMax INTEGER NOT NULL DEFAULT 0,
-                nivel INTEGER NOT NULL DEFAULT 1,
-                xp INTEGER NOT NULL DEFAULT 0,
-                bonusDefesa INTEGER NOT NULL DEFAULT 0,
-                bonusFortitude INTEGER NOT NULL DEFAULT 0,
-                bonusReflexos INTEGER NOT NULL DEFAULT 0,
-                bonusVontade INTEGER NOT NULL DEFAULT 0,
-                deslocamento TEXT NOT NULL DEFAULT '9m',
-                tamanho TEXT NOT NULL DEFAULT 'Médio',
-                penalidade_armadura INTEGER NOT NULL DEFAULT 0,
-                limiteCargaBonus INTEGER NOT NULL DEFAULT 0,
-                dinheiro TEXT NOT NULL DEFAULT '0',
-                nome TEXT NOT NULL DEFAULT '',
-                jogador TEXT NOT NULL DEFAULT '',
-                raca TEXT NOT NULL DEFAULT '',
-                origem TEXT NOT NULL DEFAULT '',
-                divindade TEXT NOT NULL DEFAULT '',
-                classes TEXT NOT NULL DEFAULT '',
-                aparencia TEXT NOT NULL DEFAULT '',
-                personalidade TEXT NOT NULL DEFAULT '',
-                historia TEXT NOT NULL DEFAULT '',
-                anotacoes TEXT NOT NULL DEFAULT ''
+                forca INTEGER NOT NULL,
+                destreza INTEGER NOT NULL,
+                constituicao INTEGER NOT NULL,
+                inteligencia INTEGER NOT NULL,
+                sabedoria INTEGER NOT NULL,
+                carisma INTEGER NOT NULL,
+                vidaAtual INTEGER NOT NULL,
+                vidaMax INTEGER NOT NULL,
+                manaAtual INTEGER NOT NULL,
+                manaMax INTEGER NOT NULL,
+                nivel INTEGER NOT NULL,
+                xp INTEGER NOT NULL,
+                bonusArmadura INTEGER NOT NULL,
+                bonusEscudo INTEGER NOT NULL,
+                outrosBonusDefesa INTEGER NOT NULL,
+                bonusFortitude INTEGER NOT NULL,
+                bonusReflexos INTEGER NOT NULL,
+                bonusVontade INTEGER NOT NULL,
+                deslocamento TEXT NOT NULL,
+                tamanho TEXT NOT NULL,
+                penalidade_armadura INTEGER NOT NULL,
+                limiteCargaBonus INTEGER NOT NULL,
+                dinheiro TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                jogador TEXT NOT NULL,
+                raca TEXT NOT NULL,
+                origem TEXT NOT NULL,
+                divindade TEXT NOT NULL,
+                classes TEXT NOT NULL,
+                aparencia TEXT NOT NULL,
+                personalidade TEXT NOT NULL,
+                historia TEXT NOT NULL,
+                anotacoes TEXT NOT NULL
             )
         """)
 
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS pericias_fantasia (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                fichaId INTEGER NOT NULL DEFAULT 0,
+                fichaId INTEGER NOT NULL,
                 nome TEXT NOT NULL,
                 atributo TEXT NOT NULL,
-                treinada INTEGER NOT NULL DEFAULT 0,
-                vantagem INTEGER NOT NULL DEFAULT 0,
-                desvantagem INTEGER NOT NULL DEFAULT 0,
-                bonus INTEGER NOT NULL DEFAULT 0
+                treinada INTEGER NOT NULL,
+                vantagem INTEGER NOT NULL,
+                desvantagem INTEGER NOT NULL,
+                bonus INTEGER NOT NULL
             )
         """)
 
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS itens_fantasia (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                fichaId INTEGER NOT NULL DEFAULT 0,
+                fichaId INTEGER NOT NULL,
                 nome TEXT NOT NULL,
-                quantidade TEXT NOT NULL DEFAULT '1',
-                descricao TEXT NOT NULL DEFAULT '',
-                slots INTEGER NOT NULL DEFAULT 1,
-                bonusDefesa INTEGER NOT NULL DEFAULT 0,
-                bonusFortitude INTEGER NOT NULL DEFAULT 0,
-                bonusReflexos INTEGER NOT NULL DEFAULT 0,
-                bonusVontade INTEGER NOT NULL DEFAULT 0,
-                bonusAtributo TEXT NOT NULL DEFAULT '',
-                tipo TEXT NOT NULL DEFAULT 'Geral',
-                acerto TEXT NOT NULL DEFAULT '',
-                dano TEXT NOT NULL DEFAULT ''
+                quantidade TEXT NOT NULL,
+                descricao TEXT NOT NULL,
+                slots INTEGER NOT NULL,
+                bonusDefesa INTEGER NOT NULL,
+                bonusFortitude INTEGER NOT NULL,
+                bonusReflexos INTEGER NOT NULL,
+                bonusVontade INTEGER NOT NULL,
+                bonusAtributo TEXT NOT NULL,
+                tipo TEXT NOT NULL,
+                acerto TEXT NOT NULL,
+                dano TEXT NOT NULL
             )
         """)
 
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS habilidades_fantasia (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                fichaId INTEGER NOT NULL DEFAULT 0,
+                fichaId INTEGER NOT NULL,
                 nome TEXT NOT NULL,
                 categoria TEXT NOT NULL,
-                descricao TEXT NOT NULL DEFAULT '',
-                custoPM INTEGER NOT NULL DEFAULT 0,
-                requisitos TEXT NOT NULL DEFAULT '',
-                acao TEXT NOT NULL DEFAULT '',
-                alcance TEXT NOT NULL DEFAULT '',
-                duracao TEXT NOT NULL DEFAULT '',
-                acerto TEXT NOT NULL DEFAULT '',
-                dano TEXT NOT NULL DEFAULT ''
+                descricao TEXT NOT NULL,
+                custoPM INTEGER NOT NULL,
+                requisitos TEXT NOT NULL,
+                acao TEXT NOT NULL,
+                alcance TEXT NOT NULL,
+                duracao TEXT NOT NULL,
+                acerto TEXT NOT NULL,
+                dano TEXT NOT NULL
             )
         """)
 
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS magias_fantasia (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                fichaId INTEGER NOT NULL DEFAULT 0,
+                fichaId INTEGER NOT NULL,
                 nome TEXT NOT NULL,
-                escola TEXT NOT NULL DEFAULT '',
-                circulo INTEGER NOT NULL DEFAULT 1,
-                execucao TEXT NOT NULL DEFAULT '',
-                alcance TEXT NOT NULL DEFAULT '',
-                area TEXT NOT NULL DEFAULT '',
-                duracao TEXT NOT NULL DEFAULT '',
-                resistencia TEXT NOT NULL DEFAULT '',
-                atributoChave TEXT NOT NULL DEFAULT 'INT',
-                efeito TEXT NOT NULL DEFAULT '',
-                componentes TEXT NOT NULL DEFAULT '',
-                acerto TEXT NOT NULL DEFAULT '',
-                dano TEXT NOT NULL DEFAULT ''
+                escola TEXT NOT NULL,
+                circulo INTEGER NOT NULL,
+                custoPM INTEGER NOT NULL,
+                execucao TEXT NOT NULL,
+                alcance TEXT NOT NULL,
+                area TEXT NOT NULL,
+                duracao TEXT NOT NULL,
+                resistencia TEXT NOT NULL,
+                atributoChave TEXT NOT NULL,
+                efeito TEXT NOT NULL,
+                componentes TEXT NOT NULL,
+                acerto TEXT NOT NULL,
+                dano TEXT NOT NULL
             )
         """)
     }

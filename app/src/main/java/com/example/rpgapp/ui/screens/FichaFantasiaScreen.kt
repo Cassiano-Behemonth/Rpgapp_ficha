@@ -211,6 +211,7 @@ fun FichaFantasiaTab(
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
     var diceFaces by remember { mutableStateOf(20) }
+    var pendingHistoryEntry by remember { mutableStateOf<String?>(null) }
 
     // Calcula defesas com os bônus dos itens (10 + nível/2 + mod + bônus de itens)
     val nivelCalculado = ficha?.nivel ?: 1
@@ -358,7 +359,7 @@ fun FichaFantasiaTab(
                             diceFaces = faces
                             diceResult = (1..faces).random()
                             showDiceAnimation = true
-                            historicoRolagens = listOf("d$faces = $diceResult") + historicoRolagens.take(4)
+                            pendingHistoryEntry = "d$faces = $diceResult"
                         }
                     }
                 }
@@ -371,7 +372,7 @@ fun FichaFantasiaTab(
                             diceResult = resultado
                             diceFaces = 20
                             showDiceAnimation = true
-                            historicoRolagens = listOf(texto) + historicoRolagens.take(4)
+                            pendingHistoryEntry = texto
                         }
                     }) { Text("Rolar") }
                 }
@@ -403,7 +404,17 @@ fun FichaFantasiaTab(
     }
 
     if (showDiceAnimation) {
-        DiceRollFantasiaAnimation(result = diceResult, faces = diceFaces, onDismiss = { showDiceAnimation = false })
+        DiceRollFantasiaAnimation(
+            result = diceResult, 
+            faces = diceFaces, 
+            onDismiss = { showDiceAnimation = false },
+            onAnimationFinished = {
+                pendingHistoryEntry?.let { entry ->
+                    historicoRolagens = listOf(entry) + historicoRolagens.take(4)
+                    pendingHistoryEntry = null
+                }
+            }
+        )
     }
 }
 
@@ -454,28 +465,50 @@ fun DefesaFantasiaDisplay(label: String, total: Int, base: String, metadeNivel: 
                     }
                 }
 
-                // Breakdown da fórmula
-                Column(
-                    modifier = Modifier.padding(start = 12.dp).weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                // Breakdown da fórmula (apenas para Defesa)
+                if (label == "Defesa") {
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        FormulaItem(base, "Base")
-                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        FormulaItem(metadeNivel.toString(), "Nív/2")
-                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        FormulaItem(modAtributo.toString(), "Mod")
-                        if (label == "Defesa") {
-                            Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            FormulaItem(base, "Base")
+                            Text(
+                                "+",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            FormulaItem(metadeNivel.toString(), "Nív/2")
+                            Text(
+                                "+",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            FormulaItem(modAtributo.toString(), "Mod")
+                            Text(
+                                "+",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             FormulaItem(armadura.toString(), "Arm")
-                            Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "+",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             FormulaItem(escudo.toString(), "Esc")
+                            Text(
+                                "+",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            FormulaItem(outros.toString(), "Out")
                         }
-                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        FormulaItem(outros.toString(), "Out")
                     }
                 }
             }
@@ -497,11 +530,17 @@ fun RecursoFantasiaField(label: String, value: String, onValueChange: (String) -
 }
 
 @Composable
-fun DiceRollFantasiaAnimation(result: Int, faces: Int, onDismiss: () -> Unit) {
+fun DiceRollFantasiaAnimation(
+    result: Int, 
+    faces: Int, 
+    onDismiss: () -> Unit,
+    onAnimationFinished: () -> Unit
+) {
     var isAnimating by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         delay(1500)
         isAnimating = false
+        onAnimationFinished() // Aqui a surpresa é revelada no histórico
         delay(800)
         onDismiss()
     }
@@ -533,12 +572,12 @@ fun DiceButton(faces: Int, onClick: () -> Unit) {
             modifier = Modifier
                 .size(40.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color.Transparent,
                     shape = MaterialTheme.shapes.small
                 ),
             contentAlignment = Alignment.Center
         ) {
-            DiceShape(faces = faces, color = MaterialTheme.colorScheme.primary)
+            DiceShape(faces = faces, color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
         }
         Text(
             text = "d$faces",
@@ -550,8 +589,8 @@ fun DiceButton(faces: Int, onClick: () -> Unit) {
 }
 
 @Composable
-fun DiceShape(faces: Int, color: Color) {
-    Canvas(modifier = Modifier.size(24.dp)) {
+fun DiceShape(faces: Int, color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
         
@@ -632,9 +671,9 @@ fun AnimatedFantasiaDice(faces: Int) {
         ),
         label = "rotation"
     )
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(150.dp)) {
         Box(modifier = Modifier.rotate(rotation)) {
-            DiceShape(faces = faces, color = Color.Red)
+            DiceShape(faces = faces, color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(100.dp))
         }
     }
 }

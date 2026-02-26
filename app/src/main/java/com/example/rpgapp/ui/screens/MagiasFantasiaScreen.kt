@@ -387,17 +387,31 @@ fun MagiaFantasiaCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                magia.formatarCirculo(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                fontWeight = FontWeight.Bold
-                            )
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    magia.formatarCirculo(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Surface(
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    "${magia.custoPM} PM",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
 
                         if (magia.escola.isNotBlank()) {
@@ -412,19 +426,6 @@ fun MagiaFantasiaCard(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
-                        }
-
-                        Surface(
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                "${magia.custoPM} PM",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
                 }
@@ -551,16 +552,7 @@ fun MagiaFantasiaCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onConjurar,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("CONJURAR (-${magia.custoPM} PM)")
-            }
+            Spacer(modifier = Modifier.height(4.dp))
         }
     }
 }
