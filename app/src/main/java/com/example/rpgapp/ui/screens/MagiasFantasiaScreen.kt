@@ -14,6 +14,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -181,80 +183,82 @@ fun MagiasFantasiaScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Filtro por círculo
-            if (circulos.size > 1) {
-                ScrollableTabRow(
-                    selectedTabIndex = circulos.indexOf(circuloFiltro),
-                    edgePadding = 0.dp,
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    circulos.forEach { circulo ->
-                        val label = if (circulo == -1) "Todas" else if (circulo == 0) "Truques" else "${circulo}º"
-                        val count = if (circulo == -1) {
-                            magias.size
-                        } else {
-                            magiasPorCirculo[circulo]?.size ?: 0
-                        }
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                // Filtro por círculo dentro do LazyColumn
+                if (circulos.size > 1) {
+                    item {
+                        ScrollableTabRow(
+                            selectedTabIndex = circulos.indexOf(circuloFiltro),
+                            edgePadding = 0.dp,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            circulos.forEach { circulo ->
+                                val label = if (circulo == -1) "Todas" else if (circulo == 0) "Truques" else "${circulo}º"
+                                val count = if (circulo == -1) {
+                                    magias.size
+                                } else {
+                                    magiasPorCirculo[circulo]?.size ?: 0
+                                }
 
-                        Tab(
-                            selected = circuloFiltro == circulo,
-                            onClick = { circuloFiltro = circulo },
-                            text = {
-                                Text(
-                                    "$label ($count)",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontSize = 13.sp
+                                Tab(
+                                    selected = circuloFiltro == circulo,
+                                    onClick = { circuloFiltro = circulo },
+                                    text = {
+                                        Text(
+                                            "$label ($count)",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 13.sp
+                                        )
+                                    }
                                 )
                             }
-                        )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
 
-            if (magiasFiltradas.isEmpty()) {
-                // Estado vazio
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            "✨",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Text(
-                            if (circuloFiltro == -1) "Nenhuma magia cadastrada" else "Nenhuma magia neste círculo",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "Adicione magias e organize seu grimório",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                if (magiasFiltradas.isEmpty()) {
+                    item {
+                        // Estado vazio
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    "✨",
+                                    style = MaterialTheme.typography.displayMedium
+                                )
+                                Text(
+                                    if (circuloFiltro == -1) "Nenhuma magia cadastrada" else "Nenhuma magia neste círculo",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    "Adicione magias e organize seu grimório",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                // Lista de magias
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    magiasFiltradas.forEach { magia ->
+                } else {
+                    items(items = magiasFiltradas, key = { it.id }) { magia ->
                         MagiaFantasiaCard(
                             magia = magia,
                             modAtributo = modAtributoChave,

@@ -13,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -89,106 +91,112 @@ fun HabilidadesFantasiaScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Histórico de rolagens
-            if (historicoRolagens.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            "📜 ÚLTIMAS ROLAGENS",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        historicoRolagens.take(4).forEach { rolagem ->
-                            Text(
-                                "▹ $rolagem",
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(vertical = 2.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Filtro por categoria
-            if (categorias.size > 1) {
-                ScrollableTabRow(
-                    selectedTabIndex = categorias.indexOf(categoriaFiltro),
-                    edgePadding = 0.dp,
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    categorias.forEach { categoria ->
-                        Tab(
-                            selected = categoriaFiltro == categoria,
-                            onClick = { categoriaFiltro = categoria },
-                            text = {
-                                val count = if (categoria == "Todas") {
-                                    habilidades.size
-                                } else {
-                                    habilidadesPorCategoria[categoria]?.size ?: 0
-                                }
-                                Text(
-                                    "$categoria ($count)",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontSize = 13.sp
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                // Filtro por categoria dentro do LazyColumn
+                if (categorias.size > 1) {
+                    item {
+                        ScrollableTabRow(
+                            selectedTabIndex = categorias.indexOf(categoriaFiltro),
+                            edgePadding = 0.dp,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            categorias.forEach { categoria ->
+                                Tab(
+                                    selected = categoriaFiltro == categoria,
+                                    onClick = { categoriaFiltro = categoria },
+                                    text = {
+                                        val count = if (categoria == "Todas") {
+                                            habilidades.size
+                                        } else {
+                                            habilidadesPorCategoria[categoria]?.size ?: 0
+                                        }
+                                        Text(
+                                            "$categoria ($count)",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 13.sp
+                                        )
+                                    }
                                 )
                             }
-                        )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
 
-            if (habilidadesFiltradas.isEmpty()) {
-                // Estado vazio
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            "⚡",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Text(
-                            if (categoriaFiltro == "Todas") "Nenhuma habilidade cadastrada" else "Nenhuma habilidade em $categoriaFiltro",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "Adicione habilidades de raça, classe, origem ou poderes",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                // Histórico de rolagens dentro do LazyColumn
+                if (historicoRolagens.isNotEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    "📜 ÚLTIMAS ROLAGENS",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                historicoRolagens.take(3).forEach { rolagem ->
+                                    Text(
+                                        "▹ $rolagem",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(vertical = 2.dp),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-            } else {
-                // Lista de habilidades
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    habilidadesFiltradas.forEach { habilidade ->
+
+                if (habilidadesFiltradas.isEmpty()) {
+                    item {
+                        // Estado vazio
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    "⚡",
+                                    style = MaterialTheme.typography.displayMedium
+                                )
+                                Text(
+                                    if (categoriaFiltro == "Todas") "Nenhuma habilidade cadastrada" else "Nenhuma habilidade em $categoriaFiltro",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    "Adicione habilidades de raça, classe, origem ou poderes",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Lista de habilidades
+                    items(items = habilidadesFiltradas, key = { it.id }) { habilidade ->
                         HabilidadeFantasiaCard(
                             habilidade = habilidade,
                             onEdit = { habilidadeToEdit = habilidade },
