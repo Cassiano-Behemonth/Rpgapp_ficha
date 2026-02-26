@@ -30,7 +30,7 @@ fun PericiasFantasiaScreen(
     val pericias by viewModel.pericias.collectAsState()
     val ficha by viewModel.ficha.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
+    val historicoRolagens by viewModel.historicoRolagens.collectAsState()
 
     Column(
         modifier = Modifier
@@ -182,7 +182,7 @@ fun PericiasFantasiaScreen(
                         },
                         onDelete = { viewModel.deletarPericia(pericia) },
                         onRolar = { resultado ->
-                            historicoRolagens = listOf(resultado) + historicoRolagens
+                            viewModel.adicionarRolagem(resultado)
                         }
                     )
                 }

@@ -30,7 +30,7 @@ fun HabilidadesFantasiaScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var habilidadeToEdit by remember { mutableStateOf<HabilidadeFantasiaEntity?>(null) }
     var categoriaFiltro by remember { mutableStateOf("Todas") }
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
+    val historicoRolagens by viewModel.historicoRolagens.collectAsState()
     var dadoCustom by remember { mutableStateOf("") }
 
     // Agrupa habilidades por categoria
@@ -194,36 +194,30 @@ fun HabilidadesFantasiaScreen(
                             onEdit = { habilidadeToEdit = habilidade },
                             onDelete = { viewModel.deletarHabilidade(habilidade) },
                             onRolarAcerto = { acerto ->
-                                val sucesso = if (habilidade.custoPM > 0) {
-                                    viewModel.consumirPM(habilidade.custoPM)
-                                } else {
-                                    true
-                                }
-
+                                val sucesso = if (habilidade.custoPM > 0) viewModel.consumirPM(habilidade.custoPM) else true
                                 if (sucesso) {
                                     val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
                                     if (resultado > 0) {
                                         val pmInfo = if (habilidade.custoPM > 0) " (-${habilidade.custoPM} PM)" else ""
-                                        historicoRolagens = listOf("${habilidade.nome} - ACERTO - $texto$pmInfo") + historicoRolagens.take(4)
+                                        viewModel.adicionarRolagem("${habilidade.nome} - ACERTO - $texto$pmInfo")
                                     }
                                 } else {
-                                    historicoRolagens = listOf("❌ PM insuficiente para ${habilidade.nome}") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("❌ PM insuficiente para ${habilidade.nome}")
                                 }
                             },
                             onRolarDano = { dano ->
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
-                                    historicoRolagens = listOf("${habilidade.nome} - LANÇAMENTO - $texto") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("${habilidade.nome} - LANÇAMENTO - $texto")
                                 }
                             },
                             onUsar = {
                                 if (habilidade.custoPM > 0) {
                                     val sucesso = viewModel.consumirPM(habilidade.custoPM)
                                     if (sucesso) {
-                                        historicoRolagens = listOf("Uso: ${habilidade.nome} (-${habilidade.custoPM} PM)") + historicoRolagens.take(4)
+                                        viewModel.adicionarRolagem("Uso: ${habilidade.nome} (-${habilidade.custoPM} PM)")
                                     } else {
-                                        // Feedback de PM insuficiente (poderia ser um Toast, mas aqui usaremos o histórico)
-                                        historicoRolagens = listOf("❌ PM insuficiente para ${habilidade.nome}") + historicoRolagens.take(4)
+                                        viewModel.adicionarRolagem("❌ PM insuficiente para ${habilidade.nome}")
                                     }
                                 }
                             }

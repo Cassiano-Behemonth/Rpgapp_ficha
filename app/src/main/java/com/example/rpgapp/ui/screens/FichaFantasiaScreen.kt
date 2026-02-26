@@ -206,7 +206,7 @@ fun FichaFantasiaTab(
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
+    val historicoRolagens by viewModel.historicoRolagens.collectAsState()
     var dadoCustom by remember { mutableStateOf("") }
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
@@ -410,7 +410,7 @@ fun FichaFantasiaTab(
             onDismiss = { showDiceAnimation = false },
             onAnimationFinished = {
                 pendingHistoryEntry?.let { entry ->
-                    historicoRolagens = listOf(entry) + historicoRolagens.take(4)
+                    viewModel.adicionarRolagem(entry)
                     pendingHistoryEntry = null
                 }
             }

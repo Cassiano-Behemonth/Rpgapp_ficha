@@ -50,6 +50,13 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _historicoRolagens = MutableStateFlow<List<String>>(emptyList())
+    val historicoRolagens: StateFlow<List<String>> = _historicoRolagens.asStateFlow()
+
+    fun adicionarRolagem(texto: String) {
+        _historicoRolagens.value = (listOf(texto) + _historicoRolagens.value).take(5)
+    }
+
     // Calcula bônus totais dos itens automaticamente
     val bonusTotalArmadura: StateFlow<Int> = itens
         .map { lista -> lista.filter { it.tipo.contains("Armadura", ignoreCase = true) }.sumOf { it.bonusDefesa } }
@@ -218,6 +225,7 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Cura", atributo = "SAB"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Diplomacia", atributo = "CAR"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Enganação", atributo = "CAR"),
+            PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Fortitude", atributo = "CON"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Furtividade", atributo = "DES"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Guerra", atributo = "INT"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Iniciativa", atributo = "DES"),
@@ -232,6 +240,7 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Obter Informação", atributo = "CAR"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Ofício", atributo = "INT"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Percepção", atributo = "SAB"),
+            PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Pilotagem", atributo = "DES"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Pontaria", atributo = "DES"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Reflexos", atributo = "DES"),
             PericiaFantasiaEntity(fichaId = fichaId.value, nome = "Religião", atributo = "SAB"),

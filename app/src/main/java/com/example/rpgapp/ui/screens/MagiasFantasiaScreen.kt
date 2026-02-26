@@ -265,24 +265,24 @@ fun MagiasFantasiaScreen(
                                 if (sucesso) {
                                     val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
                                     if (resultado > 0) {
-                                        historicoRolagens = listOf("${magia.nome} - ACERTO - $texto (-${magia.custoPM} PM)") + historicoRolagens.take(4)
+                                        viewModel.adicionarRolagem("${magia.nome} - ACERTO - $texto (-${magia.custoPM} PM)")
                                     }
                                 } else {
-                                    historicoRolagens = listOf("❌ PM insuficiente para ${magia.nome}") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("❌ PM insuficiente para ${magia.nome}")
                                 }
                             },
                             onRolarDano = { dano ->
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
-                                    historicoRolagens = listOf("${magia.nome} - LANÇAMENTO - $texto") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("${magia.nome} - LANÇAMENTO - $texto")
                                 }
                             },
                             onConjurar = {
                                 val sucesso = viewModel.consumirPM(magia.custoPM)
                                 if (sucesso) {
-                                    historicoRolagens = listOf("Magia: ${magia.nome} (-${magia.custoPM} PM)") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("Magia: ${magia.nome} (-${magia.custoPM} PM)")
                                 } else {
-                                    historicoRolagens = listOf("❌ PM insuficiente para ${magia.nome}") + historicoRolagens.take(4)
+                                    viewModel.adicionarRolagem("❌ PM insuficiente para ${magia.nome}")
                                 }
                             }
                         )
