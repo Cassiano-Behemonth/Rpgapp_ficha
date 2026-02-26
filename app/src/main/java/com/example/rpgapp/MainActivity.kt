@@ -52,12 +52,7 @@ class MainActivity : ComponentActivity() {
 
             // Atualiza as barras de sistema baseado no tema
             LaunchedEffect(currentTheme) {
-                val lightBars = when (currentTheme) {
-                    AppTheme.FANTASIA, AppTheme.BLUE_WHITE, AppTheme.WILD_WEST -> true
-                    else -> false
-                }
-
-                val barColor = when (currentTheme) {
+                val statusBarColor = when (currentTheme) {
                     AppTheme.GREEN_BLACK  -> Color.Black
                     AppTheme.FANTASIA   -> Color(0xFFFAFAFA)
                     AppTheme.GOLD_BLACK   -> Color.Black
