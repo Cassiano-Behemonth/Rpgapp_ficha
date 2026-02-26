@@ -68,6 +68,6 @@ object DiceRoller {
     }
 
     fun rolarCustom(expr: String): Pair<Int, String> {
-        return rolarDano(expr)
+        return rolarAcerto(expr)
     }
 }

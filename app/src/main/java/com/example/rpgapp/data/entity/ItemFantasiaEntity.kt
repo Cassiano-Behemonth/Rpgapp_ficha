@@ -13,7 +13,7 @@ data class ItemFantasiaEntity(
     val quantidade: String = "1",
     val descricao: String = "",
     val slots: Int = 1,
-    val bonusDefesa: Int = 0,
+    val bonusDefesa: Int = 0, // General defense bonus from item
     val bonusFortitude: Int = 0,
     val bonusReflexos: Int = 0,
     val bonusVontade: Int = 0,

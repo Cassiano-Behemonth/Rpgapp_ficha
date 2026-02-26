@@ -9,12 +9,12 @@ data class FichaFantasiaEntity(
     val id: Long = 0,
 
     // ========== ATRIBUTOS (Tormenta 20) ==========
-    val forca: Int = 10,
-    val destreza: Int = 10,
-    val constituicao: Int = 10,
-    val inteligencia: Int = 10,
-    val sabedoria: Int = 10,
-    val carisma: Int = 10,
+    val forca: Int = 0,
+    val destreza: Int = 0,
+    val constituicao: Int = 0,
+    val inteligencia: Int = 0,
+    val sabedoria: Int = 0,
+    val carisma: Int = 0,
 
     // ========== RECURSOS ==========
     val vidaAtual: Int = 0,
@@ -27,7 +27,9 @@ data class FichaFantasiaEntity(
     val xp: Int = 0,
 
     // ========== DEFESAS (bônus adicionais) ==========
-    val bonusDefesa: Int = 0,
+    val bonusArmadura: Int = 0,
+    val bonusEscudo: Int = 0,
+    val outrosBonusDefesa: Int = 0,
     val bonusFortitude: Int = 0,
     val bonusReflexos: Int = 0,
     val bonusVontade: Int = 0,
@@ -55,36 +57,24 @@ data class FichaFantasiaEntity(
 ) {
     // ========== CÁLCULOS AUTOMÁTICOS ==========
 
-    // Modificadores de atributos (Tormenta20)
-    fun modForca(): Int = calcularModificador(forca)
-    fun modDestreza(): Int = calcularModificador(destreza)
-    fun modConstituicao(): Int = calcularModificador(constituicao)
-    fun modInteligencia(): Int = calcularModificador(inteligencia)
-    fun modSabedoria(): Int = calcularModificador(sabedoria)
-    fun modCarisma(): Int = calcularModificador(carisma)
+    // Modificadores de atributos (Tormenta20 JdA)
+    fun modForca(): Int = forca
+    fun modDestreza(): Int = destreza
+    fun modConstituicao(): Int = constituicao
+    fun modInteligencia(): Int = inteligencia
+    fun modSabedoria(): Int = sabedoria
+    fun modCarisma(): Int = carisma
 
-    private fun calcularModificador(valorAtributo: Int): Int {
-        return when (valorAtributo) {
-            in 1..3 -> -2
-            in 4..7 -> -1
-            in 8..13 -> 0
-            in 14..17 -> 1
-            in 18..19 -> 2
-            in 20..21 -> 3
-            in 22..23 -> 4
-            else -> if (valorAtributo >= 24) (valorAtributo - 20) / 2 + 3 else -2
-        }
-    }
-
-    // Defesas (10 + mod + bônus)
-    fun defesa(): Int = 10 + modDestreza() + bonusDefesa
-    fun fortitude(): Int = 10 + modConstituicao() + bonusFortitude
-    fun reflexos(): Int = 10 + modDestreza() + bonusReflexos
-    fun vontade(): Int = 10 + modSabedoria() + bonusVontade
+    // Defesas (10 + metade do nível + mod + bônus)
+    fun defesa(): Int = 10 + (nivel / 2) + modDestreza() + bonusArmadura + bonusEscudo + outrosBonusDefesa
+    fun fortitude(): Int = 10 + (nivel / 2) + modConstituicao() + bonusFortitude
+    fun reflexos(): Int = 10 + (nivel / 2) + modDestreza() + bonusReflexos
+    fun vontade(): Int = 10 + (nivel / 2) + modSabedoria() + bonusVontade
 
     // Detalhamento simplificado da defesa (apenas bônus)
     fun defesaBonusIcon(): String {
-        return if (bonusDefesa > 0) "🛡️ +$bonusDefesa" else ""
+        val totalDefesaExtra = bonusArmadura + bonusEscudo + outrosBonusDefesa
+        return if (totalDefesaExtra > 0) "🛡️ +$totalDefesaExtra" else ""
     }
 
     fun fortitudeBonusIcon(): String {

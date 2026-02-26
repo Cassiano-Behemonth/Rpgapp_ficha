@@ -16,7 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
@@ -39,12 +40,12 @@ fun FichaFantasiaScreen(
     val ficha by viewModel.ficha.collectAsState()
 
     var nome by remember { mutableStateOf("") }
-    var forca by remember { mutableStateOf("10") }
-    var destreza by remember { mutableStateOf("10") }
-    var constituicao by remember { mutableStateOf("10") }
-    var inteligencia by remember { mutableStateOf("10") }
-    var sabedoria by remember { mutableStateOf("10") }
-    var carisma by remember { mutableStateOf("10") }
+    var forca by remember { mutableStateOf("0") }
+    var destreza by remember { mutableStateOf("0") }
+    var constituicao by remember { mutableStateOf("0") }
+    var inteligencia by remember { mutableStateOf("0") }
+    var sabedoria by remember { mutableStateOf("0") }
+    var carisma by remember { mutableStateOf("0") }
     var nivel by remember { mutableStateOf("1") }
     var xp by remember { mutableStateOf("0") }
     var vidaAtual by remember { mutableStateOf("") }
@@ -56,7 +57,9 @@ fun FichaFantasiaScreen(
     var dinheiro by remember { mutableStateOf("0") }
 
     // Coleta os bônus calculados automaticamente dos itens
-    val bonusDefesa by viewModel.bonusTotalDefesa.collectAsState()
+    val bonusArmadura by viewModel.bonusTotalArmadura.collectAsState()
+    val bonusEscudo by viewModel.bonusTotalEscudo.collectAsState()
+    val outrosBonusDefesa by viewModel.outrosBonusDefesaTotal.collectAsState()
     val bonusFortitude by viewModel.bonusTotalFortitude.collectAsState()
     val bonusReflexos by viewModel.bonusTotalReflexos.collectAsState()
     val bonusVontade by viewModel.bonusTotalVontade.collectAsState()
@@ -143,7 +146,7 @@ fun FichaFantasiaScreen(
                 0 -> FichaFantasiaTab(
                     nome, forca, destreza, constituicao, inteligencia, sabedoria, carisma,
                     nivel, xp, vidaAtual, vidaMax, manaAtual, manaMax, deslocamento, tamanho, dinheiro,
-                    bonusDefesa, bonusFortitude, bonusReflexos, bonusVontade,
+                    bonusArmadura, bonusEscudo, outrosBonusDefesa, bonusFortitude, bonusReflexos, bonusVontade,
                     onNomeChange = { nome = it },
                     onForcaChange = { forca = it },
                     onDestrezaChange = { destreza = it },
@@ -181,7 +184,7 @@ fun FichaFantasiaTab(
     inteligencia: String, sabedoria: String, carisma: String,
     nivel: String, xp: String, vidaAtual: String, vidaMax: String,
     manaAtual: String, manaMax: String, deslocamento: String, tamanho: String, dinheiro: String,
-    bonusDefesaCalculado: Int, bonusFortitudeCalculado: Int, bonusReflexosCalculado: Int, bonusVontadeCalculado: Int,
+    bonusArmaduraCalculado: Int, bonusEscudoCalculado: Int, outrosBonusDefesaCalculado: Int, bonusFortitudeCalculado: Int, bonusReflexosCalculado: Int, bonusVontadeCalculado: Int,
     onNomeChange: (String) -> Unit,
     onForcaChange: (String) -> Unit,
     onDestrezaChange: (String) -> Unit,
@@ -209,21 +212,24 @@ fun FichaFantasiaTab(
     var diceResult by remember { mutableStateOf(0) }
     var diceFaces by remember { mutableStateOf(20) }
 
-    // Calcula defesas com os bônus dos itens
-    val defesaTotal = remember(ficha, bonusDefesaCalculado) {
-        10 + (ficha?.modDestreza() ?: 0) + bonusDefesaCalculado
+    // Calcula defesas com os bônus dos itens (10 + nível/2 + mod + bônus de itens)
+    val nivelCalculado = ficha?.nivel ?: 1
+    val metadeNivel = nivelCalculado / 2
+    
+    val defesaTotal = remember(ficha, bonusArmaduraCalculado, bonusEscudoCalculado, outrosBonusDefesaCalculado) {
+        10 + metadeNivel + (ficha?.modDestreza() ?: 0) + bonusArmaduraCalculado + bonusEscudoCalculado + outrosBonusDefesaCalculado
     }
     val fortitudeTotal = remember(ficha, bonusFortitudeCalculado) {
-        10 + (ficha?.modConstituicao() ?: 0) + bonusFortitudeCalculado
+        10 + metadeNivel + (ficha?.modConstituicao() ?: 0) + bonusFortitudeCalculado
     }
     val reflexosTotal = remember(ficha, bonusReflexosCalculado) {
-        10 + (ficha?.modDestreza() ?: 0) + bonusReflexosCalculado
+        10 + metadeNivel + (ficha?.modDestreza() ?: 0) + bonusReflexosCalculado
     }
     val vontadeTotal = remember(ficha, bonusVontadeCalculado) {
-        10 + (ficha?.modSabedoria() ?: 0) + bonusVontadeCalculado
+        10 + metadeNivel + (ficha?.modSabedoria() ?: 0) + bonusVontadeCalculado
     }
 
-    val defesaBonusIcon = if (bonusDefesaCalculado > 0) "🛡️ +$bonusDefesaCalculado" else ""
+    val defesaBonusIcon = if (bonusArmaduraCalculado + bonusEscudoCalculado + outrosBonusDefesaCalculado > 0) "🛡️ +${bonusArmaduraCalculado + bonusEscudoCalculado + outrosBonusDefesaCalculado}" else ""
     val fortitudeBonusIcon = if (bonusFortitudeCalculado > 0) "💪 +$bonusFortitudeCalculado" else ""
     val reflexosBonusIcon = if (bonusReflexosCalculado > 0) "⚡ +$bonusReflexosCalculado" else ""
     val vontadeBonusIcon = if (bonusVontadeCalculado > 0) "🧠 +$bonusVontadeCalculado" else ""
@@ -295,10 +301,13 @@ fun FichaFantasiaTab(
                 Text("▸ DEFESAS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DefesaFantasiaDisplay("Defesa", defesaTotal, defesaBonusIcon, Modifier.weight(1f))
-                    DefesaFantasiaDisplay("Fort", fortitudeTotal, fortitudeBonusIcon, Modifier.weight(1f))
-                    DefesaFantasiaDisplay("Ref", reflexosTotal, reflexosBonusIcon, Modifier.weight(1f))
-                    DefesaFantasiaDisplay("Vont", vontadeTotal, vontadeBonusIcon, Modifier.weight(1f))
+                    DefesaFantasiaDisplay("Defesa", defesaTotal, "10", metadeNivel, ficha?.modDestreza() ?: 0, bonusArmaduraCalculado, bonusEscudoCalculado, outrosBonusDefesaCalculado, Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DefesaFantasiaDisplay("Fortitude", fortitudeTotal, "10", metadeNivel, ficha?.modConstituicao() ?: 0, 0, 0, bonusFortitudeCalculado, Modifier.weight(1f))
+                    DefesaFantasiaDisplay("Reflexos", reflexosTotal, "10", metadeNivel, ficha?.modDestreza() ?: 0, 0, 0, bonusReflexosCalculado, Modifier.weight(1f))
+                    DefesaFantasiaDisplay("Vontade", vontadeTotal, "10", metadeNivel, ficha?.modSabedoria() ?: 0, 0, 0, bonusVontadeCalculado, Modifier.weight(1f))
                 }
             }
         }
@@ -339,15 +348,17 @@ fun FichaFantasiaTab(
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("▸ ROLAGEM DE DADOS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     listOf(4, 6, 8, 10, 12, 20).forEach { faces ->
-                        Button(onClick = {
+                        DiceButton(faces = faces) {
                             diceFaces = faces
                             diceResult = (1..faces).random()
                             showDiceAnimation = true
                             historicoRolagens = listOf("d$faces = $diceResult") + historicoRolagens.take(4)
-                        }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(4.dp)) {
-                            Text("d$faces", fontSize = 12.sp)
                         }
                     }
                 }
@@ -400,46 +411,83 @@ fun FichaFantasiaTab(
 fun AtributoFantasiaField(label: String, value: String, onValueChange: (String) -> Unit, modificador: Int, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        OutlinedTextField(value = value, onValueChange = { if (it.length <= 2) onValueChange(it) }, modifier = Modifier.fillMaxWidth(), singleLine = true, textStyle = LocalTextStyle.current.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center))
-        Text(text = if (modificador >= 0) "+$modificador" else "$modificador", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        OutlinedTextField(value = value, onValueChange = { if (it.length <= 3) onValueChange(it) }, modifier = Modifier.fillMaxWidth(), singleLine = true, textStyle = LocalTextStyle.current.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center))
     }
 }
 
 @Composable
-fun DefesaFantasiaDisplay(label: String, valor: Int, bonusIcon: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+fun DefesaFantasiaDisplay(label: String, total: Int, base: String, metadeNivel: Int, modAtributo: Int, armadura: Int, escudo: Int, outros: Int, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = valor.toString(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (bonusIcon.isNotEmpty()) {
-                    Text(
-                        text = bonusIcon,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
-                    )
+                // Grande bloco do total
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = total.toString(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+
+                // Breakdown da fórmula
+                Column(
+                    modifier = Modifier.padding(start = 12.dp).weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        FormulaItem(base, "Base")
+                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FormulaItem(metadeNivel.toString(), "Nív/2")
+                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FormulaItem(modAtributo.toString(), "Mod")
+                        if (label == "Defesa") {
+                            Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FormulaItem(armadura.toString(), "Arm")
+                            Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FormulaItem(escudo.toString(), "Esc")
+                        }
+                        Text("+", modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FormulaItem(outros.toString(), "Out")
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun FormulaItem(valor: String, legenda: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = valor, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = legenda, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -474,15 +522,119 @@ fun DiceRollFantasiaAnimation(result: Int, faces: Int, onDismiss: () -> Unit) {
 }
 
 @Composable
+fun DiceButton(faces: Int, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            DiceShape(faces = faces, color = MaterialTheme.colorScheme.primary)
+        }
+        Text(
+            text = "d$faces",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun DiceShape(faces: Int, color: Color) {
+    Canvas(modifier = Modifier.size(24.dp)) {
+        val w = size.width
+        val h = size.height
+        
+        when (faces) {
+            4 -> { // Triângulo
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            6 -> { // Quadrado
+                drawRect(color, size = size)
+            }
+            8 -> { // Losango (Diamante)
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h / 2)
+                    lineTo(w / 2, h)
+                    lineTo(0f, h / 2)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            10 -> { // Pipa/Kite
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h * 0.4f)
+                    lineTo(w / 2, h)
+                    lineTo(0f, h * 0.4f)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            12 -> { // Hexágono (simplificado para d12)
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    val angle = 360f / 6
+                    for (i in 0 until 6) {
+                        val rad = Math.toRadians((i * angle - 90).toDouble())
+                        val x = w / 2 + (w / 2) * Math.cos(rad).toFloat()
+                        val y = h / 2 + (h / 2) * Math.sin(rad).toFloat()
+                        if (i == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                    close()
+                }
+                drawPath(path, color)
+            }
+            20 -> { // Hexágono com linhas internas (simplificado)
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    val angle = 360f / 6
+                    for (i in 0 until 6) {
+                        val rad = Math.toRadians((i * angle - 90).toDouble())
+                        val x = w / 2 + (w / 2) * Math.cos(rad).toFloat()
+                        val y = h / 2 + (h / 2) * Math.sin(rad).toFloat()
+                        if (i == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                    close()
+                }
+                drawPath(path, color)
+                // Linhas internas para dar profundidade de d20
+                drawLine(color, start = androidx.compose.ui.geometry.Offset(w/2, 0f), end = androidx.compose.ui.geometry.Offset(w/2, h), strokeWidth = 1f)
+            }
+        }
+    }
+}
+
+@Composable
 fun AnimatedFantasiaDice(faces: Int) {
     val infiniteTransition = rememberInfiniteTransition(label = "dice")
-    val rotation by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(800, easing = LinearEasing), repeatMode = RepeatMode.Restart), label = "rotation")
-    Canvas(modifier = Modifier.size(100.dp)) {
-        val radius = size.minDimension / 3
-        rotate(rotation) {
-            drawCircle(color = Color.Red, radius = radius, center = center)
-            val dotRadius = radius / 8
-            drawCircle(color = Color.White, radius = dotRadius, center = center)
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
+        Box(modifier = Modifier.rotate(rotation)) {
+            DiceShape(faces = faces, color = Color.Red)
         }
     }
 }

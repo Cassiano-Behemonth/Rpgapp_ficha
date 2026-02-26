@@ -27,12 +27,17 @@ data class PericiaFantasiaEntity(
      * @return modificador total
      */
     fun calcularModificador(modAtributo: Int, nivel: Int): Int {
-        val modBase = if (treinada) {
-            modAtributo + nivel + bonus
+        val metadeNivel = nivel / 2
+        val bonusTreinamento = if (treinada) {
+            when {
+                nivel <= 6 -> 2
+                nivel <= 14 -> 4
+                else -> 6
+            }
         } else {
-            modAtributo + bonus
+            0
         }
-        return modBase
+        return modAtributo + metadeNivel + bonusTreinamento + bonus
     }
 
     // ========== FORMATAÇÃO ==========

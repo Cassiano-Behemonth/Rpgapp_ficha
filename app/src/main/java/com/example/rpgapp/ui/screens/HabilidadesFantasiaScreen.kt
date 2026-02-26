@@ -88,51 +88,23 @@ fun HabilidadesFantasiaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Sistema de rolagem de dados
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        "🎲 ROLAGEM DE DADOS",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+            // Histórico de rolagens
+            if (historicoRolagens.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = dadoCustom,
-                            onValueChange = { dadoCustom = it },
-                            label = { Text("Ex: 2d6+3, 1d20", fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        Button(onClick = {
-                            val (resultado, texto) = DiceRoller.rolarCustom(dadoCustom)
-                            if (resultado > 0) {
-                                historicoRolagens = listOf(texto) + historicoRolagens.take(4)
-                            }
-                        }) {
-                            Text("Rolar")
-                        }
-                    }
-
-                    if (historicoRolagens.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            "Últimas Rolagens:",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold
+                            "📜 ÚLTIMAS ROLAGENS",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        historicoRolagens.take(3).forEach { rolagem ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        historicoRolagens.take(4).forEach { rolagem ->
                             Text(
                                 "▹ $rolagem",
                                 style = MaterialTheme.typography.bodySmall,
@@ -142,9 +114,8 @@ fun HabilidadesFantasiaScreen(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Filtro por categoria
             if (categorias.size > 1) {
@@ -223,15 +194,37 @@ fun HabilidadesFantasiaScreen(
                             onEdit = { habilidadeToEdit = habilidade },
                             onDelete = { viewModel.deletarHabilidade(habilidade) },
                             onRolarAcerto = { acerto ->
-                                val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
-                                if (resultado > 0) {
-                                    historicoRolagens = listOf("${habilidade.nome} - $texto") + historicoRolagens.take(4)
+                                val sucesso = if (habilidade.custoPM > 0) {
+                                    viewModel.consumirPM(habilidade.custoPM)
+                                } else {
+                                    true
+                                }
+
+                                if (sucesso) {
+                                    val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
+                                    if (resultado > 0) {
+                                        val pmInfo = if (habilidade.custoPM > 0) " (-${habilidade.custoPM} PM)" else ""
+                                        historicoRolagens = listOf("${habilidade.nome} - ACERTO - $texto$pmInfo") + historicoRolagens.take(4)
+                                    }
+                                } else {
+                                    historicoRolagens = listOf("❌ PM insuficiente para ${habilidade.nome}") + historicoRolagens.take(4)
                                 }
                             },
                             onRolarDano = { dano ->
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
-                                    historicoRolagens = listOf("${habilidade.nome} - $texto") + historicoRolagens.take(4)
+                                    historicoRolagens = listOf("${habilidade.nome} - LANÇAMENTO - $texto") + historicoRolagens.take(4)
+                                }
+                            },
+                            onUsar = {
+                                if (habilidade.custoPM > 0) {
+                                    val sucesso = viewModel.consumirPM(habilidade.custoPM)
+                                    if (sucesso) {
+                                        historicoRolagens = listOf("Uso: ${habilidade.nome} (-${habilidade.custoPM} PM)") + historicoRolagens.take(4)
+                                    } else {
+                                        // Feedback de PM insuficiente (poderia ser um Toast, mas aqui usaremos o histórico)
+                                        historicoRolagens = listOf("❌ PM insuficiente para ${habilidade.nome}") + historicoRolagens.take(4)
+                                    }
                                 }
                             }
                         )
@@ -287,7 +280,8 @@ fun HabilidadeFantasiaCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onRolarAcerto: (String) -> Unit,
-    onRolarDano: (String) -> Unit
+    onRolarDano: (String) -> Unit,
+    onUsar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -438,6 +432,19 @@ fun HabilidadeFantasiaCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+
+            if (habilidade.isPoder()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onUsar,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Text("USAR HABILIDADE (-${habilidade.custoPM} PM)")
+                }
             }
         }
     }

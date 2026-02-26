@@ -13,6 +13,7 @@ data class MagiaFantasiaEntity(
     val nome: String,
     val escola: String = "",
     val circulo: Int = 1,
+    val custoPM: Int = 1,
 
     // ========== EXECUÇÃO ==========
     val execucao: String = "",

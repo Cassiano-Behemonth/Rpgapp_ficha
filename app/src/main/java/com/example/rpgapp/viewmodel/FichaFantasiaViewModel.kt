@@ -51,8 +51,16 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Calcula bônus totais dos itens automaticamente
-    val bonusTotalDefesa: StateFlow<Int> = itens
-        .map { lista -> lista.sumOf { it.bonusDefesa } }
+    val bonusTotalArmadura: StateFlow<Int> = itens
+        .map { lista -> lista.filter { it.tipo.contains("Armadura", ignoreCase = true) }.sumOf { it.bonusDefesa } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
+    val bonusTotalEscudo: StateFlow<Int> = itens
+        .map { lista -> lista.filter { it.tipo.contains("Escudo", ignoreCase = true) }.sumOf { it.bonusDefesa } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
+    val outrosBonusDefesaTotal: StateFlow<Int> = itens
+        .map { lista -> lista.filter { !it.tipo.contains("Armadura", ignoreCase = true) && !it.tipo.contains("Escudo", ignoreCase = true) }.sumOf { it.bonusDefesa } }
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     val bonusTotalFortitude: StateFlow<Int> = itens
@@ -103,12 +111,12 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
             fichaDao.updateFicha(
                 fichaAtual.copy(
                     nome = nome,
-                    forca = forca.toIntOrNull() ?: 10,
-                    destreza = destreza.toIntOrNull() ?: 10,
-                    constituicao = constituicao.toIntOrNull() ?: 10,
-                    inteligencia = inteligencia.toIntOrNull() ?: 10,
-                    sabedoria = sabedoria.toIntOrNull() ?: 10,
-                    carisma = carisma.toIntOrNull() ?: 10,
+                    forca = forca.toIntOrNull() ?: 0,
+                    destreza = destreza.toIntOrNull() ?: 0,
+                    constituicao = constituicao.toIntOrNull() ?: 0,
+                    inteligencia = inteligencia.toIntOrNull() ?: 0,
+                    sabedoria = sabedoria.toIntOrNull() ?: 0,
+                    carisma = carisma.toIntOrNull() ?: 0,
                     nivel = nivel.toIntOrNull() ?: 1,
                     xp = xp.toIntOrNull() ?: 0,
                     vidaAtual = vidaAtual.toIntOrNull() ?: 0,
@@ -124,7 +132,9 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun atualizarDefesas(
-        bonusDefesa: Int,
+        bonusArmadura: Int,
+        bonusEscudo: Int,
+        outrosBonusDefesa: Int,
         bonusFortitude: Int,
         bonusReflexos: Int,
         bonusVontade: Int
@@ -133,13 +143,25 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
             val fichaAtual = ficha.value ?: return@launch
             fichaDao.updateFicha(
                 fichaAtual.copy(
-                    bonusDefesa = bonusDefesa,
+                    bonusArmadura = bonusArmadura,
+                    bonusEscudo = bonusEscudo,
+                    outrosBonusDefesa = outrosBonusDefesa,
                     bonusFortitude = bonusFortitude,
                     bonusReflexos = bonusReflexos,
                     bonusVontade = bonusVontade
                 )
             )
         }
+    }
+
+    fun consumirPM(valor: Int): Boolean {
+        val f = ficha.value ?: return false
+        if (f.manaAtual < valor) return false
+        
+        viewModelScope.launch {
+            fichaDao.updateFicha(f.copy(manaAtual = f.manaAtual - valor))
+        }
+        return true
     }
 
     fun salvarDescricao(
@@ -339,7 +361,8 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
         efeito: String,
         componentes: String,
         acerto: String,
-        dano: String
+        dano: String,
+        custoPM: Int = 1
     ) {
         viewModelScope.launch {
             magiaDao.insertMagia(
@@ -348,6 +371,7 @@ class FichaFantasiaViewModel(application: Application) : AndroidViewModel(applic
                     nome = nome,
                     escola = escola,
                     circulo = circulo,
+                    custoPM = custoPM,
                     execucao = execucao,
                     alcance = alcance,
                     area = area,

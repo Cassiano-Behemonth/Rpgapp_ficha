@@ -152,51 +152,23 @@ fun MagiasFantasiaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Sistema de rolagem de dados
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        "🎲 ROLAGEM DE DADOS",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+            // Histórico de rolagens
+            if (historicoRolagens.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = dadoCustom,
-                            onValueChange = { dadoCustom = it },
-                            label = { Text("Ex: 2d6+3, 1d20", fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        Button(onClick = {
-                            val (resultado, texto) = DiceRoller.rolarCustom(dadoCustom)
-                            if (resultado > 0) {
-                                historicoRolagens = listOf(texto) + historicoRolagens.take(4)
-                            }
-                        }) {
-                            Text("Rolar")
-                        }
-                    }
-
-                    if (historicoRolagens.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            "Últimas Rolagens:",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold
+                            "📜 ÚLTIMAS ROLAGENS",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        historicoRolagens.take(3).forEach { rolagem ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        historicoRolagens.take(4).forEach { rolagem ->
                             Text(
                                 "▹ $rolagem",
                                 style = MaterialTheme.typography.bodySmall,
@@ -206,9 +178,8 @@ fun MagiasFantasiaScreen(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Filtro por círculo
             if (circulos.size > 1) {
@@ -290,15 +261,28 @@ fun MagiasFantasiaScreen(
                             onEdit = { magiaToEdit = magia },
                             onDelete = { viewModel.deletarMagia(magia) },
                             onRolarAcerto = { acerto ->
-                                val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
-                                if (resultado > 0) {
-                                    historicoRolagens = listOf("${magia.nome} - $texto") + historicoRolagens.take(4)
+                                val sucesso = viewModel.consumirPM(magia.custoPM)
+                                if (sucesso) {
+                                    val (resultado, texto) = DiceRoller.rolarAcerto(acerto)
+                                    if (resultado > 0) {
+                                        historicoRolagens = listOf("${magia.nome} - ACERTO - $texto (-${magia.custoPM} PM)") + historicoRolagens.take(4)
+                                    }
+                                } else {
+                                    historicoRolagens = listOf("❌ PM insuficiente para ${magia.nome}") + historicoRolagens.take(4)
                                 }
                             },
                             onRolarDano = { dano ->
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
-                                    historicoRolagens = listOf("${magia.nome} - $texto") + historicoRolagens.take(4)
+                                    historicoRolagens = listOf("${magia.nome} - LANÇAMENTO - $texto") + historicoRolagens.take(4)
+                                }
+                            },
+                            onConjurar = {
+                                val sucesso = viewModel.consumirPM(magia.custoPM)
+                                if (sucesso) {
+                                    historicoRolagens = listOf("Magia: ${magia.nome} (-${magia.custoPM} PM)") + historicoRolagens.take(4)
+                                } else {
+                                    historicoRolagens = listOf("❌ PM insuficiente para ${magia.nome}") + historicoRolagens.take(4)
                                 }
                             }
                         )
@@ -314,8 +298,8 @@ fun MagiasFantasiaScreen(
                 magia = null,
                 atributoChaveDefault = atributoChave,
                 onDismiss = { showAddDialog = false },
-                onConfirm = { nome, escola, circulo, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano ->
-                    viewModel.adicionarMagia(nome, escola, circulo, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano)
+                onConfirm = { nome, escola, circulo, custoPM, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano ->
+                    viewModel.adicionarMagia(nome, escola, circulo, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano, custoPM)
                     showAddDialog = false
                 }
             )
@@ -328,12 +312,13 @@ fun MagiasFantasiaScreen(
                 magia = magia,
                 atributoChaveDefault = atributoChave,
                 onDismiss = { magiaToEdit = null },
-                onConfirm = { nome, escola, circulo, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano ->
+                onConfirm = { nome, escola, circulo, custoPM, execucao, alcance, area, duracao, resistencia, atribChave, efeito, componentes, acerto, dano ->
                     viewModel.atualizarMagia(
                         magia.copy(
                             nome = nome,
                             escola = escola,
                             circulo = circulo,
+                            custoPM = custoPM,
                             execucao = execucao,
                             alcance = alcance,
                             area = area,
@@ -360,7 +345,8 @@ fun MagiaFantasiaCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onRolarAcerto: (String) -> Unit,
-    onRolarDano: (String) -> Unit
+    onRolarDano: (String) -> Unit,
+    onConjurar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -429,13 +415,13 @@ fun MagiaFantasiaCard(
                         }
 
                         Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.errorContainer,
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                magia.formatarCD(modAtributo),
+                                "${magia.custoPM} PM",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 fontWeight = FontWeight.Bold
                             )
@@ -443,27 +429,43 @@ fun MagiaFantasiaCard(
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                Column(horizontalAlignment = Alignment.End) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(
+                            onClick = onEdit,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Editar",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = onDelete,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Deletar",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(40.dp)
+                    
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.padding(end = 4.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Deletar",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
+                        Text(
+                            magia.formatarCD(modAtributo),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -548,6 +550,17 @@ fun MagiaFantasiaCard(
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onConjurar,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("CONJURAR (-${magia.custoPM} PM)")
+            }
         }
     }
 }
@@ -558,11 +571,12 @@ fun MagiaFantasiaDialog(
     magia: MagiaFantasiaEntity?,
     atributoChaveDefault: String,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Int, String, String, String, String, String, String, String, String, String, String) -> Unit
+    onConfirm: (String, String, Int, Int, String, String, String, String, String, String, String, String, String, String) -> Unit
 ) {
     var nome by remember { mutableStateOf(magia?.nome ?: "") }
     var escola by remember { mutableStateOf(magia?.escola ?: "") }
     var circulo by remember { mutableStateOf(magia?.circulo?.toString() ?: "1") }
+    var custoPM by remember { mutableStateOf(magia?.custoPM?.toString() ?: "1") }
     var execucao by remember { mutableStateOf(magia?.execucao ?: "") }
     var alcance by remember { mutableStateOf(magia?.alcance ?: "") }
     var area by remember { mutableStateOf(magia?.area ?: "") }
@@ -648,6 +662,14 @@ fun MagiaFantasiaDialog(
                         onValueChange = { if (it.length <= 1) circulo = it },
                         label = { Text("Círculo") },
                         modifier = Modifier.width(90.dp),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = custoPM,
+                        onValueChange = { if (it.length <= 2) custoPM = it },
+                        label = { Text("Custo PM") },
+                        modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                 }
@@ -802,6 +824,7 @@ fun MagiaFantasiaDialog(
                             nome,
                             escola,
                             circulo.toIntOrNull() ?: 1,
+                            custoPM.toIntOrNull() ?: 1,
                             execucao,
                             alcance,
                             area,
