@@ -208,7 +208,7 @@ fun GameModeCard(
                     Text(
                         basedOn,
                         style = MaterialTheme.typography.labelSmall,
-                        color = onSurfaceVariant,
+                        color = accentColor.copy(alpha = 0.7f),
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
@@ -218,7 +218,7 @@ fun GameModeCard(
             Text(
                 description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = onSurface,
+                color = accentColor.copy(alpha = 0.9f),
                 lineHeight = 20.sp
             )
 
@@ -238,7 +238,7 @@ fun GameModeCard(
                         Text(
                             feature,
                             style = MaterialTheme.typography.bodySmall,
-                            color = onSurfaceVariant
+                            color = accentColor.copy(alpha = 0.8f)
                         )
                     }
                 }
