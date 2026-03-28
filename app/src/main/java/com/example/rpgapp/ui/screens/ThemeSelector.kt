@@ -24,7 +24,8 @@ enum class AppTheme {
     PURPLE_GRAY,
     BLUE_WHITE,
     WILD_WEST,
-    ASSIMILACAO
+    ASSIMILACAO,
+    BLACK_RED
 }
 
 @Composable
@@ -121,6 +122,15 @@ fun ThemeSelectorScreen(
             backgroundColor = Color(0xFF080A08),
             isSelected = currentTheme == AppTheme.ASSIMILACAO,
             onClick = { onThemeSelected(AppTheme.ASSIMILACAO) }
+        )
+
+        ThemeCard(
+            title = "🔴 Preto e Vermelho",
+            subtitle = "Sombrio e intenso",
+            primaryColor = Color(0xFFD32F2F),
+            backgroundColor = Color.Black,
+            isSelected = currentTheme == AppTheme.BLACK_RED,
+            onClick = { onThemeSelected(AppTheme.BLACK_RED) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))

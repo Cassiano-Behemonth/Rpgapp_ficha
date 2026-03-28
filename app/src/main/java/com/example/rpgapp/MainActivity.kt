@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                     AppTheme.BLUE_WHITE   -> Color(0xFFFAFAFA)
                     AppTheme.WILD_WEST    -> Color(0xFFFFF8DC)
                     AppTheme.ASSIMILACAO  -> Color(0xFF080C08)
+                    AppTheme.BLACK_RED    -> Color.Black
                 }
 
                 val lightBars = when (currentTheme) {

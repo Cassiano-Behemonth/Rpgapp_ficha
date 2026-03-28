@@ -61,6 +61,13 @@ private val Assim_Background = Color(0xFF080A08)   // Quase preto orgânico
 private val Assim_Surface    = Color(0xFF0E130E)   // Superfície verde escuríssima
 private val Assim_SurfaceVar = Color(0xFF131A13)   // Cards — floresta noturna
 
+// Preto e Vermelho
+private val BlackRed_Primary = Color(0xFFD32F2F)
+private val BlackRed_Light = Color(0xFFFF5252)
+private val BlackRed_Dark = Color(0xFFB71C1C)
+private val BlackRed_Background = Color(0xFF000000)
+private val BlackRed_Surface = Color(0xFF121212)
+
 @Composable
 fun getColorScheme(theme: AppTheme): ColorScheme {
     return when (theme) {
@@ -221,6 +228,26 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
 
             inverseSurface      = Assim_GreenLight,
             inverseOnSurface    = Color(0xFF080A08)
+        )
+
+        AppTheme.BLACK_RED -> darkColorScheme(
+            primary = BlackRed_Primary,
+            onPrimary = Color.Black,
+            primaryContainer = BlackRed_Dark,
+            onPrimaryContainer = BlackRed_Light,
+            secondary = BlackRed_Light,
+            onSecondary = Color.Black,
+            background = BlackRed_Background,
+            onBackground = BlackRed_Light,
+            surface = BlackRed_Surface,
+            onSurface = BlackRed_Primary,
+            surfaceVariant = Color(0xFF1E1E1E),
+            onSurfaceVariant = BlackRed_Light,
+            surfaceContainer = BlackRed_Surface,
+            error = Color(0xFFEF5350),
+            outline = BlackRed_Dark,
+            inverseSurface = BlackRed_Light,
+            inverseOnSurface = Color.Black
         )
     }
 }
