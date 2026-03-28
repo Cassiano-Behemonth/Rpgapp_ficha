@@ -12,7 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,10 +25,14 @@ fun GameModeSelectorScreen(
     currentMode: GameMode?,
     onModeSelected: (GameMode) -> Unit
 ) {
+    val background = MaterialTheme.colorScheme.background
+    val onBackground = MaterialTheme.colorScheme.onBackground
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A))
+            .background(background)
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
@@ -39,7 +45,7 @@ fun GameModeSelectorScreen(
             "🎲 RPG records ",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFF4CAF50),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
 
@@ -47,14 +53,14 @@ fun GameModeSelectorScreen(
             "Escolha o Modo de Jogo",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = onBackground,
             textAlign = TextAlign.Center
         )
 
         Text(
             "Selecione qual sistema você quer jogar",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
+            color = onSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -70,7 +76,6 @@ fun GameModeSelectorScreen(
                 "Sistema de Sanidade",
                 "Rolagem de dados múltiplos"
             ),
-            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF0D4D0D)),
             accentColor = Color(0xFF4CAF50),
             isSelected = currentMode == GameMode.INVESTIGACAO_HORROR,
             onClick = { onModeSelected(GameMode.INVESTIGACAO_HORROR) }
@@ -86,7 +91,6 @@ fun GameModeSelectorScreen(
                 "Antecedentes personalizados",
                 "Habilidades e equipamentos"
             ),
-            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF4D2600)),
             accentColor = Color(0xFFD2691E),
             isSelected = currentMode == GameMode.VELHO_OESTE,
             onClick = { onModeSelected(GameMode.VELHO_OESTE) }
@@ -102,7 +106,6 @@ fun GameModeSelectorScreen(
                 "Sistema de Saúde narrativo em 6 condições",
                 "Mutações e Características únicas"
             ),
-            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF0D3D2E)),
             accentColor = Color(0xFF00BFA5),
             isSelected = currentMode == GameMode.ASSIMILACAO,
             onClick = { onModeSelected(GameMode.ASSIMILACAO) }
@@ -118,7 +121,6 @@ fun GameModeSelectorScreen(
                 "Sistema de classes e raças",
                 "Rolagens baseadas em d20"
             ),
-            gradientColors = listOf(Color(0xFF1A1A1A), Color(0xFF4D0000)),
             accentColor = Color(0xFFE53935),
             isSelected = currentMode == GameMode.FANTASIA,
             onClick = { onModeSelected(GameMode.FANTASIA) }
@@ -129,7 +131,7 @@ fun GameModeSelectorScreen(
         Text(
             "Você pode trocar de modo a qualquer momento",
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
+            color = onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp)
         )
@@ -141,11 +143,21 @@ fun GameModeCard(
     title: String,
     description: String,
     features: List<String>,
-    gradientColors: List<Color>,
     accentColor: Color,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val surface = MaterialTheme.colorScheme.surface
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
+    // Gradiente que usa as cores do tema — o acento aparece levemente na base do card
+    val gradientColors = listOf(
+        surface,
+        accentColor.copy(alpha = 0.08f).compositeOver(surface)
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -163,7 +175,7 @@ fun GameModeCard(
             ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = surface
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isSelected) 8.dp else 4.dp
@@ -173,9 +185,7 @@ fun GameModeCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                        colors = gradientColors
-                    )
+                    brush = Brush.verticalGradient(colors = gradientColors)
                 )
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -193,16 +203,38 @@ fun GameModeCard(
             Text(
                 description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White,
+                color = onSurface,
                 lineHeight = 20.sp
             )
+
+            // Lista de features
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                features.forEach { feature ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            "•",
+                            color = accentColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            feature,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             if (isSelected) {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = accentColor.copy(alpha = 0.2f)
+                        containerColor = accentColor.copy(alpha = 0.15f)
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
