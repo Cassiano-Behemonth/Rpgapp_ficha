@@ -36,7 +36,7 @@ fun ThemeSelectorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0D0D0D))
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
@@ -49,13 +49,13 @@ fun ThemeSelectorScreen(
             "Escolha o Tema",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             "Selecione as cores do aplicativo",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -154,7 +154,7 @@ fun ThemeCard(
             ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2A2A2A)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -172,12 +172,12 @@ fun ThemeCard(
                     title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 if (isSelected) {

@@ -69,6 +69,7 @@ fun GameModeSelectorScreen(
         // Card Investigação Horror
         GameModeCard(
             title = "👁️ INVESTIGAÇÃO HORROR",
+            basedOn = "Baseado em: Ordem Paranormal e Call of Cthulhu",
             description = "Sistema de horror cósmico e investigação paranormal",
             features = listOf(
                 "Atributos: FOR, AGI, PRE",
@@ -84,6 +85,7 @@ fun GameModeSelectorScreen(
         // Card Velho Oeste
         GameModeCard(
             title = "💀 VELHO OESTE",
+            basedOn = "Baseado em: Sacramento",
             description = "Aventuras no coração do velho oeste americano",
             features = listOf(
                 "Atributos: Físico, Velocidade, Intelecto, Coragem, Defesa",
@@ -99,6 +101,7 @@ fun GameModeSelectorScreen(
         // Card Assimilação
         GameModeCard(
             title = "🧬 SOBREVIVÊNCIA",
+            basedOn = "Baseado em: Assimilação",
             description = "RPG pós-apocalíptico de sobrevivência e mutação",
             features = listOf(
                 "Aptidões: Instintos, Conhecimentos e Práticas",
@@ -114,6 +117,7 @@ fun GameModeSelectorScreen(
         // Card Fantasia
         GameModeCard(
             title = "🐉 FANTASIA",
+            basedOn = "Baseado em: Tormenta",
             description = "Aventuras épicas em um mundo de magia e monstros",
             features = listOf(
                 "Atributos: FOR, DES, CON, INT, SAB, CAR",
@@ -141,6 +145,7 @@ fun GameModeSelectorScreen(
 @Composable
 fun GameModeCard(
     title: String,
+    basedOn: String? = null,
     description: String,
     features: List<String>,
     accentColor: Color,
@@ -191,13 +196,23 @@ fun GameModeCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Título
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = accentColor,
-                fontSize = 22.sp
-            )
+            Column {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = accentColor,
+                    fontSize = 22.sp
+                )
+                if (basedOn != null) {
+                    Text(
+                        basedOn,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
 
             // Descrição
             Text(
