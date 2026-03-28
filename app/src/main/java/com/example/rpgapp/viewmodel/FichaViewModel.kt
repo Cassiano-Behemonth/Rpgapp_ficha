@@ -22,6 +22,19 @@ class FichaViewModel(application: Application) : AndroidViewModel(application) {
     private val _fichaId = MutableStateFlow(0L)
     val fichaId: StateFlow<Long> = _fichaId
 
+    // Histórico de rolagens compartilhado (Modo Horror/Investigação)
+    private val _historicoRolagens = MutableStateFlow<List<String>>(emptyList())
+    val historicoRolagens: StateFlow<List<String>> = _historicoRolagens
+
+    fun adicionarRolagem(texto: String) {
+        val listaAtual = _historicoRolagens.value.toMutableList()
+        listaAtual.add(0, texto)
+        if (listaAtual.size > 20) {
+            listaAtual.removeAt(listaAtual.size - 1)
+        }
+        _historicoRolagens.value = listaAtual
+    }
+
     val pericias: StateFlow<List<PericiaEntity>> = fichaId
         .flatMapLatest { id ->
             if (id > 0) periciaDao.getPericiasFromFicha(id)

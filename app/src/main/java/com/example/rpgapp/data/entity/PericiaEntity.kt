@@ -12,5 +12,15 @@ data class PericiaEntity(
     val nome: String,
     val atributo: String,
     val treino: Boolean = false,
+    val vantagem: Boolean = false,
+    val desvantagem: Boolean = false,
     val bonus: Int = 0
-)
+) {
+    fun getStatusRolagem(): String {
+        return when {
+            vantagem -> "Vantagem"
+            desvantagem -> "Desvantagem"
+            else -> "Normal"
+        }
+    }
+}

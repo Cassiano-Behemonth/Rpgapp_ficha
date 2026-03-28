@@ -35,6 +35,7 @@ fun FichaRpgScreen(
     onModeChange: () -> Unit = {}
 ) {
     val ficha by viewModel.ficha.collectAsState()
+    val historicoRolagens by viewModel.historicoRolagens.collectAsState()
 
     var nome by remember { mutableStateOf("") }
     var forca by remember { mutableStateOf("") }
@@ -136,13 +137,8 @@ fun FichaRpgScreen(
                     onSanidadeAtualChange = { sanidadeAtual = it },
                     onSanidadeMaxChange = { sanidadeMax = it },
 
-                    onSalvar = {
-                        viewModel.salvarFicha(
-                            forca, agilidade, presenca, nex,
-                            vidaAtual, vidaMax, sanidadeAtual, sanidadeMax
-                        )
-                    },
-
+                    historicoRolagens = historicoRolagens,
+                    onRolar = { texto -> viewModel.adicionarRolagem(texto) },
                     onThemeChange = onThemeChange,
                     onModeChange = onModeChange
                 )
@@ -174,16 +170,15 @@ fun FichaTab(
     onVidaMaxChange: (String) -> Unit,
     onSanidadeAtualChange: (String) -> Unit,
     onSanidadeMaxChange: (String) -> Unit,
-    onSalvar: () -> Unit,
+    historicoRolagens: List<String>,
+    onRolar: (String) -> Unit,
     onThemeChange: () -> Unit,
     onModeChange: () -> Unit
 ) {
-    var historicoRolagens by remember { mutableStateOf<List<String>>(emptyList()) }
     var dadoCustom by remember { mutableStateOf("") }
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
     var diceFaces by remember { mutableStateOf(20) }
-    var showSaveConfirmation by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -305,7 +300,7 @@ fun FichaTab(
                                 diceFaces = faces
                                 diceResult = (1..faces).random()
                                 showDiceAnimation = true
-                                historicoRolagens = listOf("d$faces = $diceResult") + historicoRolagens.take(4)
+                                onRolar("d$faces = $diceResult")
                             },
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(4.dp)
@@ -336,7 +331,7 @@ fun FichaTab(
                                 diceResult = resultado
                                 diceFaces = 20
                                 showDiceAnimation = true
-                                historicoRolagens = listOf(texto) + historicoRolagens.take(4)
+                                onRolar(texto)
                             }
                         }
                     ) {
@@ -351,7 +346,7 @@ fun FichaTab(
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
                     )
-                    historicoRolagens.forEach { rolagem ->
+                    historicoRolagens.take(4).forEach { rolagem ->
                         Text(
                             "▹ $rolagem",
                             style = MaterialTheme.typography.bodyMedium,
@@ -362,27 +357,6 @@ fun FichaTab(
                 }
             }
         }
-
-        Button(
-            onClick = {
-                onSalvar()
-                showSaveConfirmation = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("💾 SALVAR MANUALMENTE", fontWeight = FontWeight.Bold)
-        }
-
-        Text(
-            "",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
 
         OutlinedButton(
             onClick = onThemeChange,
@@ -402,25 +376,6 @@ fun FichaTab(
             )
         ) {
             Text("🔄 TROCAR MODO DE JOGO", fontWeight = FontWeight.Bold)
-        }
-    }
-
-    if (showSaveConfirmation) {
-        LaunchedEffect(Unit) {
-            delay(2000)
-            showSaveConfirmation = false
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Snackbar(
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Text("✓ Ficha salva com sucesso!")
-            }
         }
     }
 

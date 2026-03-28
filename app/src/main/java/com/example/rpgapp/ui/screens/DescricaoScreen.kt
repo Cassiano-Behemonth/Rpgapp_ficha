@@ -31,7 +31,7 @@ fun DescricaoScreen(
     var personalidade by remember { mutableStateOf("") }
     var historia by remember { mutableStateOf("") }
     var anotacoes by remember { mutableStateOf("") }
-    var showSaveConfirmation by remember { mutableStateOf(false) }
+
 
     // Carrega dados quando ficha está disponível
     LaunchedEffect(ficha) {
@@ -47,6 +47,15 @@ fun DescricaoScreen(
             historia = it.historia
             anotacoes = it.anotacoes
         }
+    }
+
+    // Salva automaticamente após 1 segundo se houver mudança
+    LaunchedEffect(nome, jogador, origem, classe, trilha, patente, aparencia, personalidade, historia, anotacoes) {
+        kotlinx.coroutines.delay(1000)
+        viewModel.salvarDescricao(
+            nome, jogador, origem, classe, trilha, patente,
+            aparencia, personalidade, historia, anotacoes
+        )
     }
 
     Column(
@@ -244,43 +253,6 @@ fun DescricaoScreen(
                         .height(150.dp),
                     maxLines = 7
                 )
-            }
-        }
-
-        // Botão salvar
-        Button(
-            onClick = {
-                viewModel.salvarDescricao(
-                    nome, jogador, origem, classe, trilha, patente,
-                    aparencia, personalidade, historia, anotacoes
-                )
-                showSaveConfirmation = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("💾 SALVAR DESCRIÇÃO", fontWeight = FontWeight.Bold)
-        }
-    }
-
-    // Confirmação de salvamento
-    if (showSaveConfirmation) {
-        LaunchedEffect(Unit) {
-            delay(2000)
-            showSaveConfirmation = false
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Snackbar(
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Text("✓ Descrição salva com sucesso!")
             }
         }
     }
