@@ -90,75 +90,72 @@ fun HabilidadesFantasiaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Histórico de rolagens
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+        // Histórico de rolagens fixo acima do LazyColumn
+        if (historicoRolagens.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             ) {
-                // Filtro por categoria dentro do LazyColumn
-                if (categorias.size > 1) {
-                    item {
-                        ScrollableTabRow(
-                            selectedTabIndex = categorias.indexOf(categoriaFiltro),
-                            edgePadding = 0.dp,
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            categorias.forEach { categoria ->
-                                Tab(
-                                    selected = categoriaFiltro == categoria,
-                                    onClick = { categoriaFiltro = categoria },
-                                    text = {
-                                        val count = if (categoria == "Todas") {
-                                            habilidades.size
-                                        } else {
-                                            habilidadesPorCategoria[categoria]?.size ?: 0
-                                        }
-                                        Text(
-                                            "$categoria ($count)",
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "📜 ÚLTIMA ROLAGEM",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    historicoRolagens.take(1).forEach { rolagem ->
+                        Text(
+                            "▹ $rolagem",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(vertical = 2.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
-                // Histórico de rolagens dentro do LazyColumn
-                if (historicoRolagens.isNotEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    "📜 ÚLTIMAS ROLAGENS",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                historicoRolagens.take(3).forEach { rolagem ->
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            // Filtro por categoria dentro do LazyColumn
+            if (categorias.size > 1) {
+                item {
+                    ScrollableTabRow(
+                        selectedTabIndex = categorias.indexOf(categoriaFiltro),
+                        edgePadding = 0.dp,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        categorias.forEach { categoria ->
+                            Tab(
+                                selected = categoriaFiltro == categoria,
+                                onClick = { categoriaFiltro = categoria },
+                                text = {
+                                    val count = if (categoria == "Todas") {
+                                        habilidades.size
+                                    } else {
+                                        habilidadesPorCategoria[categoria]?.size ?: 0
+                                    }
                                     Text(
-                                        "▹ $rolagem",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(vertical = 2.dp),
-                                        color = MaterialTheme.colorScheme.primary
+                                        "$categoria ($count)",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontSize = 13.sp
                                     )
                                 }
-                            }
+                            )
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
+            }
 
                 if (habilidadesFiltradas.isEmpty()) {
                     item {
@@ -196,7 +193,11 @@ fun HabilidadesFantasiaScreen(
                     }
                 } else {
                     // Lista de habilidades
-                    items(items = habilidadesFiltradas, key = { it.id }) { habilidade ->
+                    items(
+                        items = habilidadesFiltradas, 
+                        key = { it.id },
+                        contentType = { "Habilidade" }
+                    ) { habilidade ->
                         HabilidadeFantasiaCard(
                             habilidade = habilidade,
                             onEdit = { habilidadeToEdit = habilidade },
@@ -217,16 +218,6 @@ fun HabilidadesFantasiaScreen(
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
                                     viewModel.adicionarRolagem("${habilidade.nome} - LANÇAMENTO - $texto")
-                                }
-                            },
-                            onUsar = {
-                                if (habilidade.custoPM > 0) {
-                                    val sucesso = viewModel.consumirPM(habilidade.custoPM)
-                                    if (sucesso) {
-                                        viewModel.adicionarRolagem("Uso: ${habilidade.nome} (-${habilidade.custoPM} PM)")
-                                    } else {
-                                        viewModel.adicionarRolagem("❌ PM insuficiente para ${habilidade.nome}")
-                                    }
                                 }
                             }
                         )
@@ -282,8 +273,7 @@ fun HabilidadeFantasiaCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onRolarAcerto: (String) -> Unit,
-    onRolarDano: (String) -> Unit,
-    onUsar: () -> Unit
+    onRolarDano: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -434,19 +424,6 @@ fun HabilidadeFantasiaCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-            }
-
-            if (habilidade.isPoder()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = onUsar,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
-                ) {
-                    Text("USAR HABILIDADE (-${habilidade.custoPM} PM)")
-                }
             }
         }
     }

@@ -85,41 +85,39 @@ fun PericiasFantasiaScreen(
             }
         }
 
+        if (historicoRolagens.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "📜 Última Rolagem",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    historicoRolagens.take(1).forEach { rolagem ->
+                        Text(
+                            "▹ $rolagem",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // Histórico de rolagens dentro do LazyColumn para rolar junto
-            if (historicoRolagens.isNotEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                "📜 Últimas Rolagens",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            historicoRolagens.take(3).forEach { rolagem ->
-                                Text(
-                                    "▹ $rolagem",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
 
             if (pericias.isEmpty()) {
                 item {
@@ -155,13 +153,27 @@ fun PericiasFantasiaScreen(
                     }
                 }
             } else {
+                val nivel = ficha?.nivel ?: 1
+                val mods = mapOf(
+                    "FOR" to (ficha?.modForca() ?: 0),
+                    "DES" to (ficha?.modDestreza() ?: 0),
+                    "CON" to (ficha?.modConstituicao() ?: 0),
+                    "INT" to (ficha?.modInteligencia() ?: 0),
+                    "SAB" to (ficha?.modSabedoria() ?: 0),
+                    "CAR" to (ficha?.modCarisma() ?: 0)
+                )
+
                 items(
                     items = pericias,
-                    key = { it.id } // Chave única para performance
+                    key = { it.id }, // Chave única para performance
+                    contentType = { "Pericia" } // Ajuda extra na reciclagem de views com swipe rápido
                 ) { pericia ->
+                    val modAtributo = mods[pericia.atributo] ?: 0
+
                     PericiaFantasiaCard(
                         pericia = pericia,
-                        ficha = ficha,
+                        modAtributo = modAtributo,
+                        nivel = nivel,
                         onTreinoChange = {
                             viewModel.atualizarPericia(pericia.copy(treinada = it))
                         },
@@ -210,7 +222,8 @@ fun PericiasFantasiaScreen(
 @Composable
 fun PericiaFantasiaCard(
     pericia: PericiaFantasiaEntity,
-    ficha: com.example.rpgapp.data.entity.FichaFantasiaEntity?,
+    modAtributo: Int,
+    nivel: Int,
     onTreinoChange: (Boolean) -> Unit,
     onVantagemChange: (Boolean) -> Unit,
     onDesvantagemChange: (Boolean) -> Unit,
@@ -218,17 +231,6 @@ fun PericiaFantasiaCard(
     onDelete: () -> Unit,
     onRolar: (String) -> Unit
 ) {
-    val modAtributo = when (pericia.atributo) {
-        "FOR" -> ficha?.modForca() ?: 0
-        "DES" -> ficha?.modDestreza() ?: 0
-        "CON" -> ficha?.modConstituicao() ?: 0
-        "INT" -> ficha?.modInteligencia() ?: 0
-        "SAB" -> ficha?.modSabedoria() ?: 0
-        "CAR" -> ficha?.modCarisma() ?: 0
-        else -> 0
-    }
-
-    val nivel = ficha?.nivel ?: 1
     val modificador = pericia.calcularModificador(modAtributo, nivel)
 
     Card(

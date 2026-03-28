@@ -164,13 +164,13 @@ fun MagiasFantasiaScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            "📜 ÚLTIMAS ROLAGENS",
+                            "📜 ÚLTIMA ROLAGEM",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        historicoRolagens.take(4).forEach { rolagem ->
+                        historicoRolagens.take(1).forEach { rolagem ->
                             Text(
                                 "▹ $rolagem",
                                 style = MaterialTheme.typography.bodySmall,
@@ -258,7 +258,11 @@ fun MagiasFantasiaScreen(
                         }
                     }
                 } else {
-                    items(items = magiasFiltradas, key = { it.id }) { magia ->
+                    items(
+                        items = magiasFiltradas, 
+                        key = { it.id },
+                        contentType = { "Magia" }
+                    ) { magia ->
                         MagiaFantasiaCard(
                             magia = magia,
                             modAtributo = modAtributoChave,
@@ -279,14 +283,6 @@ fun MagiasFantasiaScreen(
                                 val (resultado, texto) = DiceRoller.rolarDano(dano)
                                 if (resultado > 0) {
                                     viewModel.adicionarRolagem("${magia.nome} - LANÇAMENTO - $texto")
-                                }
-                            },
-                            onConjurar = {
-                                val sucesso = viewModel.consumirPM(magia.custoPM)
-                                if (sucesso) {
-                                    viewModel.adicionarRolagem("Magia: ${magia.nome} (-${magia.custoPM} PM)")
-                                } else {
-                                    viewModel.adicionarRolagem("❌ PM insuficiente para ${magia.nome}")
                                 }
                             }
                         )
@@ -349,8 +345,7 @@ fun MagiaFantasiaCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onRolarAcerto: (String) -> Unit,
-    onRolarDano: (String) -> Unit,
-    onConjurar: () -> Unit
+    onRolarDano: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -363,116 +358,121 @@ fun MagiaFantasiaCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Cabeçalho
+            // Cabeçalho (Linha 1: Título e Botões)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            magia.getEmojiEscola(),
-                            fontSize = 20.sp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            magia.nome,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Text(
-                                    magia.formatarCirculo(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Surface(
-                                color = MaterialTheme.colorScheme.errorContainer,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Text(
-                                    "${magia.custoPM} PM",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        if (magia.escola.isNotBlank()) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Text(
-                                    magia.escola,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        magia.getEmojiEscola(),
+                        fontSize = 20.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        magia.nome,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(
-                            onClick = onEdit,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Edit,
-                                contentDescription = "Editar",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Deletar",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                    
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Deletar",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Linha 2: Badges (Círculo, Escola, PM e CD)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Badges da esquerda (Círculo, Escola, PM)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.padding(end = 4.dp)
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Text(
-                            magia.formatarCD(modAtributo),
+                            magia.formatarCirculo(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             fontWeight = FontWeight.Bold
                         )
                     }
+
+                    if (magia.escola.isNotBlank()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                magia.escola,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            "${magia.custoPM} PM",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // CD na direita
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.padding(end = 4.dp)
+                ) {
+                    Text(
+                        magia.formatarCD(modAtributo),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -614,50 +614,55 @@ fun MagiaFantasiaDialog(
                     singleLine = true
                 )
 
+                // Dropdown escola
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = escola,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Escola") },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = "Selecionar"
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    // Camada transparente por cima para capturar o clique na caixa inteira
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { expandedEscola = true }
+                    )
+
+                    DropdownMenu(
+                        expanded = expandedEscola,
+                        onDismissRequest = { expandedEscola = false }
+                    ) {
+                        escolas.forEach { esc ->
+                            DropdownMenuItem(
+                                text = { Text(esc) },
+                                onClick = {
+                                    escola = esc
+                                    expandedEscola = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Dropdown escola
-                    Box(modifier = Modifier.weight(1f)) {
-                        OutlinedTextField(
-                            value = escola,
-                            onValueChange = { escola = it },
-                            label = { Text("Escola") },
-                            trailingIcon = {
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = "Selecionar",
-                                    modifier = Modifier.clickable { expandedEscola = true }
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expandedEscola = true },
-                            singleLine = true
-                        )
-
-                        DropdownMenu(
-                            expanded = expandedEscola,
-                            onDismissRequest = { expandedEscola = false }
-                        ) {
-                            escolas.forEach { esc ->
-                                DropdownMenuItem(
-                                    text = { Text(esc) },
-                                    onClick = {
-                                        escola = esc
-                                        expandedEscola = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
                     OutlinedTextField(
                         value = circulo,
                         onValueChange = { if (it.length <= 1) circulo = it },
                         label = { Text("Círculo") },
-                        modifier = Modifier.width(90.dp),
+                        modifier = Modifier.weight(1f),
                         singleLine = true
                     )
 
