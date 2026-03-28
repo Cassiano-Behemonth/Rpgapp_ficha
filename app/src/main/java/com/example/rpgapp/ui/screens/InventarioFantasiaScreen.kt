@@ -76,51 +76,79 @@ fun InventarioFantasiaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val limiteMaximo = ficha?.limiteCargaMaximo() ?: 0
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = if (slotsUsados > limiteMaximo) MaterialTheme.colorScheme.errorContainer
+                                     else if (slotsUsados > limiteSlots) MaterialTheme.colorScheme.surfaceVariant
+                                     else MaterialTheme.colorScheme.surface
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column {
-                        Text(
-                            "Carga",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "$slotsUsados / $limiteSlots slots",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (slotsUsados > limiteSlots) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                "Carga (Espaços)",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (slotsUsados > limiteMaximo) MaterialTheme.colorScheme.onErrorContainer
+                                        else MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "$slotsUsados / $limiteSlots",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (slotsUsados > limiteMaximo) MaterialTheme.colorScheme.error
+                                        else if (slotsUsados > limiteSlots) MaterialTheme.colorScheme.error
+                                        else MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        if (slotsUsados > limiteMaximo) {
+                            Text(
+                                "🚫 LIMITE EXCEDIDO",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        } else if (slotsUsados > limiteSlots) {
+                            Text(
+                                "⚠️ SOBRECARREGADO",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
 
-                    if (slotsUsados > limiteSlots) {
+                    if (slotsUsados > limiteMaximo) {
                         Text(
-                            "⚠️ SOBRECARGA",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
+                            "Você não pode carregar mais de $limiteMaximo espaços! Descarte itens.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else if (slotsUsados > limiteSlots) {
+                        Text(
+                            "Penalidades: -5 Armadura e -3m de Deslocamento.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
 
             Spacer(modifier = Modifier.height(16.dp))
 

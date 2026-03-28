@@ -89,8 +89,17 @@ data class FichaFantasiaEntity(
         return if (bonusVontade > 0) "🧠 +$bonusVontade" else ""
     }
 
-    // Limite de carga (FOR + bônus)
-    fun limiteCarga(): Int = forca + limiteCargaBonus
+    // Limite de carga normal (10 + (FOR*2 se FOR > 0 else FOR) + bônus)
+    fun limiteCarga(): Int {
+        val forcaVal = forca
+        val spacesDaForca = if (forcaVal > 0) forcaVal * 2 else forcaVal
+        return 10 + spacesDaForca + limiteCargaBonus
+    }
+
+    // Limite de carga máximo absoluto (o dobro do limite normal)
+    fun limiteCargaMaximo(): Int {
+        return limiteCarga() * 2
+    }
 
     // Formatar modificador com sinal (+/-)
     fun formatarMod(valor: Int): String {
