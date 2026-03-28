@@ -2,6 +2,7 @@ package com.example.rpgapp.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,11 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
@@ -292,20 +293,15 @@ fun FichaTab(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     listOf(4, 6, 8, 10, 12, 20).forEach { faces ->
-                        Button(
-                            onClick = {
-                                diceFaces = faces
-                                diceResult = (1..faces).random()
-                                showDiceAnimation = true
-                                onRolar("d$faces = $diceResult")
-                            },
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(4.dp)
-                        ) {
-                            Text("d$faces", fontSize = 12.sp)
+                        HorrorDiceButton(faces = faces) {
+                            diceFaces = faces
+                            diceResult = (1..faces).random()
+                            showDiceAnimation = true
+                            onRolar("d$faces = $diceResult")
                         }
                     }
                 }
@@ -452,44 +448,20 @@ fun AnimatedDice(faces: Int) {
         label = "rotation"
     )
 
-    Canvas(modifier = Modifier.size(100.dp)) {
-        val centerX = size.width / 2
-        val centerY = size.height / 2
-        val radius = size.minDimension / 3
-
-        rotate(rotation) {
-            drawCircle(
-                color = Color(0xFF4CAF50),
-                radius = radius,
-                center = center
-            )
-
-            val dotRadius = radius / 8
-            when (faces) {
-                20 -> {
-                    for (i in 0..5) {
-                        val angle = (i * 60f + rotation) * (Math.PI / 180f)
-                        drawCircle(
-                            color = Color.Black,
-                            radius = dotRadius,
-                            center = androidx.compose.ui.geometry.Offset(
-                                centerX + (radius * 0.6f * cos(angle)).toFloat(),
-                                centerY + (radius * 0.6f * sin(angle)).toFloat()
-                            )
-                        )
-                    }
-                }
-                else -> {
-                    drawCircle(
-                        color = Color.Black,
-                        radius = dotRadius,
-                        center = center
-                    )
-                }
-            }
-        }
+    Box(
+        modifier = Modifier
+            .size(100.dp)
+            .rotate(rotation),
+        contentAlignment = Alignment.Center
+    ) {
+        HorrorDiceShape(
+            faces = faces,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(80.dp)
+        )
     }
 }
+
 
 @Composable
 fun AtributoCompacto(
@@ -589,3 +561,102 @@ fun rolarCustom(expr: String): Pair<Int, String> {
 
     return Pair(resultadoFinal, textoFinal)
 }
+
+@Composable
+fun HorrorDiceButton(faces: Int, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            HorrorDiceShape(faces = faces, color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+        }
+        Text(
+            text = "d$faces",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun HorrorDiceShape(faces: Int, color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        when (faces) {
+            4 -> { // Triângulo
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            6 -> { // Quadrado
+                drawRect(color, size = size)
+            }
+            8 -> { // Losango
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h / 2)
+                    lineTo(w / 2, h)
+                    lineTo(0f, h / 2)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            10 -> { // Pipa
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, 0f)
+                    lineTo(w, h * 0.4f)
+                    lineTo(w / 2, h)
+                    lineTo(0f, h * 0.4f)
+                    close()
+                }
+                drawPath(path, color)
+            }
+            12 -> { // Hexágono
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    val angle = 360f / 6
+                    for (i in 0 until 6) {
+                        val rad = Math.toRadians((i * angle - 90).toDouble())
+                        val x = w / 2 + (w / 2) * Math.cos(rad).toFloat()
+                        val y = h / 2 + (h / 2) * Math.sin(rad).toFloat()
+                        if (i == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                    close()
+                }
+                drawPath(path, color)
+            }
+            20 -> { // Hexágono com linha central (d20)
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    val angle = 360f / 6
+                    for (i in 0 until 6) {
+                        val rad = Math.toRadians((i * angle - 90).toDouble())
+                        val x = w / 2 + (w / 2) * Math.cos(rad).toFloat()
+                        val y = h / 2 + (h / 2) * Math.sin(rad).toFloat()
+                        if (i == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                    close()
+                }
+                drawPath(path, color)
+                drawLine(
+                    color = color.copy(alpha = 0.4f),
+                    start = androidx.compose.ui.geometry.Offset(w / 2, 0f),
+                    end = androidx.compose.ui.geometry.Offset(w / 2, h),
+                    strokeWidth = 1.5f
+                )
+            }
+        }
+    }
+}
