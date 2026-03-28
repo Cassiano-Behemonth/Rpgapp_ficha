@@ -180,6 +180,7 @@ fun FichaTab(
     var showDiceAnimation by remember { mutableStateOf(false) }
     var diceResult by remember { mutableStateOf(0) }
     var diceFaces by remember { mutableStateOf(20) }
+    var pendingHistoryEntry by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -301,7 +302,7 @@ fun FichaTab(
                             diceFaces = faces
                             diceResult = (1..faces).random()
                             showDiceAnimation = true
-                            onRolar("d$faces = $diceResult")
+                            pendingHistoryEntry = "d$faces = $diceResult"
                         }
                     }
                 }
@@ -327,7 +328,7 @@ fun FichaTab(
                                 diceResult = resultado
                                 diceFaces = 20
                                 showDiceAnimation = true
-                                onRolar(texto)
+                                pendingHistoryEntry = texto
                             }
                         }
                     ) {
@@ -379,7 +380,13 @@ fun FichaTab(
         DiceRollAnimation(
             result = diceResult,
             faces = diceFaces,
-            onDismiss = { showDiceAnimation = false }
+            onDismiss = { showDiceAnimation = false },
+            onAnimationFinished = {
+                pendingHistoryEntry?.let { entry ->
+                    onRolar(entry)
+                    pendingHistoryEntry = null
+                }
+            }
         )
     }
 }
@@ -388,13 +395,15 @@ fun FichaTab(
 fun DiceRollAnimation(
     result: Int,
     faces: Int,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onAnimationFinished: () -> Unit = {}
 ) {
     var isAnimating by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         delay(1500)
         isAnimating = false
+        onAnimationFinished()
         delay(800)
         onDismiss()
     }

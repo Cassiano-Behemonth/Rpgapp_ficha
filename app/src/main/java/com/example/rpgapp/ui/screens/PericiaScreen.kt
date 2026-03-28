@@ -1,7 +1,5 @@
 package com.example.rpgapp.ui.screens
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,13 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rpgapp.data.entity.FichaEntity
 import com.example.rpgapp.data.entity.PericiaEntity
 import com.example.rpgapp.viewmodel.FichaViewModel
 
@@ -35,7 +31,11 @@ fun PericiasScreen(
     val historicoRolagens by viewModel.historicoRolagens.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
-    // Lista de perícias padrão do sistema (Ordem Paranormal)
+    // Estado para animação — resultado só entra no histórico após animação
+    var showDiceAnimation by remember { mutableStateOf(false) }
+    var diceResult by remember { mutableStateOf(0) }
+    var pendingHistoryEntry by remember { mutableStateOf<String?>(null) }
+
     val periciasPadrao = listOf(
         "Acrobacia" to "AGI",
         "Atletismo" to "FOR",
@@ -68,36 +68,11 @@ fun PericiasScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
     ) {
-        // === BANNER STICKY DE ÚLTIMA ROLAGEM ===
-        val ultimaRolagem = historicoRolagens.firstOrNull()
-        if (ultimaRolagem != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text("🎲", fontSize = 14.sp)
-                Text(
-                    ultimaRolagem,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-        }
-
         // === CABEÇALHO ===
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -127,65 +102,88 @@ fun PericiasScreen(
                         Text("Padrão", fontSize = 12.sp)
                     }
                 }
-
-                FilledTonalButton(
-                    onClick = { showAddDialog = true }
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Adicionar",
-                        modifier = Modifier.size(16.dp)
-                    )
+                FilledTonalButton(onClick = { showAddDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Adicionar", modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("Nova", fontSize = 12.sp)
                 }
             }
         }
 
-        // === LISTA DE PERÍCIAS ===
-        if (pericias.isEmpty()) {
+        // === CARD DE ÚLTIMA ROLAGEM (igual ao Fantasia) ===
+        if (historicoRolagens.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("🎲", style = MaterialTheme.typography.displayMedium)
+                Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        "Nenhuma perícia cadastrada",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
+                        "📜 Última Rolagem",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        "Adicione perícias manualmente ou use o conjunto padrão",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    historicoRolagens.take(1).forEach { rolagem ->
+                        Text(
+                            "▹ $rolagem",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
                 }
             }
-        } else {
-            // Pre-compute atributos to avoid reading from ficha inside each card
-            val forcaVal = ficha?.forca ?: 0
-            val agilidadeVal = ficha?.agilidade ?: 0
-            val presencaVal = ficha?.presenca ?: 0
+        }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // === LISTA (LazyColumn) ===
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            if (pericias.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("🎲", style = MaterialTheme.typography.displayMedium)
+                            Text(
+                                "Nenhuma perícia cadastrada",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "Adicione perícias manualmente ou use o conjunto padrão",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                val forcaVal = ficha?.forca ?: 0
+                val agilidadeVal = ficha?.agilidade ?: 0
+                val presencaVal = ficha?.presenca ?: 0
+
                 items(
                     items = pericias,
                     key = { it.id },
@@ -198,25 +196,25 @@ fun PericiasScreen(
                         else -> 0
                     }
 
-                    PericiaCard(
+                    HorrorPericiaCard(
                         pericia = pericia,
                         atributoVal = atributoVal,
                         onTreinoChange = {
                             viewModel.atualizarPericia(pericia.copy(treino = it))
                         },
-                        onVantagemChange = { novaVantagem ->
+                        onVantagemChange = { nova ->
                             viewModel.atualizarPericia(
                                 pericia.copy(
-                                    vantagem = novaVantagem,
-                                    desvantagem = if (novaVantagem) false else pericia.desvantagem
+                                    vantagem = nova,
+                                    desvantagem = if (nova) false else pericia.desvantagem
                                 )
                             )
                         },
-                        onDesvantagemChange = { novaDesvantagem ->
+                        onDesvantagemChange = { nova ->
                             viewModel.atualizarPericia(
                                 pericia.copy(
-                                    desvantagem = novaDesvantagem,
-                                    vantagem = if (novaDesvantagem) false else pericia.vantagem
+                                    desvantagem = nova,
+                                    vantagem = if (nova) false else pericia.vantagem
                                 )
                             )
                         },
@@ -224,11 +222,30 @@ fun PericiasScreen(
                             viewModel.atualizarPericia(pericia.copy(bonus = it.toIntOrNull() ?: 0))
                         },
                         onDelete = { viewModel.deletarPericia(pericia) },
-                        onRolar = { texto -> viewModel.adicionarRolagem(texto) }
+                        onRolar = { resultado, totalResult ->
+                            diceResult = totalResult
+                            pendingHistoryEntry = resultado
+                            showDiceAnimation = true
+                        }
                     )
                 }
             }
         }
+    }
+
+    // Animação de dado — resultado só vai ao histórico depois da animação
+    if (showDiceAnimation) {
+        DiceRollAnimation(
+            result = diceResult,
+            faces = 20,
+            onDismiss = { showDiceAnimation = false },
+            onAnimationFinished = {
+                pendingHistoryEntry?.let { entry ->
+                    viewModel.adicionarRolagem(entry)
+                    pendingHistoryEntry = null
+                }
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -245,7 +262,7 @@ fun PericiasScreen(
 }
 
 @Composable
-fun PericiaCard(
+fun HorrorPericiaCard(
     pericia: PericiaEntity,
     atributoVal: Int,
     onTreinoChange: (Boolean) -> Unit,
@@ -253,30 +270,20 @@ fun PericiaCard(
     onDesvantagemChange: (Boolean) -> Unit,
     onBonusChange: (String) -> Unit,
     onDelete: () -> Unit,
-    onRolar: (String) -> Unit
+    onRolar: (String, Int) -> Unit  // (texto para histórico, resultado numérico para animação)
 ) {
-    val cardColor by animateColorAsState(
-        targetValue = when {
-            pericia.treino && pericia.vantagem -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
-            pericia.treino -> MaterialTheme.colorScheme.primaryContainer
-            pericia.vantagem -> MaterialTheme.colorScheme.secondaryContainer
-            pericia.desvantagem -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-            else -> MaterialTheme.colorScheme.surface
-        },
-        animationSpec = tween(300),
-        label = "cardColor"
-    )
-
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .padding(12.dp)
         ) {
-            // === LINHA SUPERIOR: Nome + Atributo + Botão Rolar ===
+            // === Linha 1: Nome + Atributo + Botão Rolar ===
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -285,43 +292,27 @@ fun PericiaCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         pericia.nome,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            pericia.atributo,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (atributoVal != 0) {
-                            Text(
-                                "(${atributoVal}d20)",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (pericia.bonus != 0) {
-                            Text(
-                                if (pericia.bonus > 0) "+${pericia.bonus}" else "${pericia.bonus}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (pericia.bonus > 0)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.error
-                            )
-                        }
+                    // Exibe atributo e quantos dados serão rolados
+                    val numDados = maxOf(atributoVal, 1)
+                    val bonusLabel = when {
+                        pericia.bonus > 0 -> " +${pericia.bonus}(Bôn)"
+                        pericia.bonus < 0 -> " ${pericia.bonus}(Bôn)"
+                        else -> ""
                     }
+                    val treinoLabel = if (pericia.treino) " +5(Trei)" else ""
+                    Text(
+                        "${pericia.atributo} • ${numDados}d20$treinoLabel$bonusLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                // Botão Rolar
                 FilledTonalButton(
                     onClick = {
                         val numDados = maxOf(atributoVal, 1)
@@ -335,114 +326,109 @@ fun PericiaCard(
 
                         val detalhes = if (numDados > 1) resultados.joinToString(", ") else maiorBase.toString()
                         val statusLabel = when {
-                            pericia.vantagem -> " 👍Vant"
-                            pericia.desvantagem -> " 👎Desv"
+                            pericia.vantagem -> " (Vantagem)"
+                            pericia.desvantagem -> " (Desvantagem)"
                             else -> ""
                         }
-                        val treinoLabel = if (pericia.treino) " +5(Trei)" else ""
-                        val bonusLabel = if (pericia.bonus != 0) " ${if (pericia.bonus > 0) "+" else ""}${pericia.bonus}(Bôn)" else ""
-
-                        val texto = "${pericia.nome}$statusLabel: [$detalhes]→$maiorBase$treinoLabel$bonusLabel = $total"
-                        onRolar(texto)
+                        val bonusStr = if (pericia.bonus != 0) " + ${pericia.bonus}" else ""
+                        val treinoStr = if (pericia.treino) " +5(T)" else ""
+                        val textoHistorico = "${pericia.nome}$statusLabel: [$detalhes]→$maiorBase$treinoStr$bonusStr = $total"
+                        onRolar(textoHistorico, total)
                     },
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    modifier = Modifier.height(40.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp)
                 ) {
-                    Text("🎲 Rolar", fontSize = 12.sp)
-                }
-
-                Spacer(Modifier.width(4.dp))
-
-                // Botão deletar
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Remover",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Text("🎲", fontSize = 16.sp)
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // === LINHA INFERIOR: Treino | Vantagem | Desvantagem | Bônus ===
+            // === Linha 2: Bônus + Checkboxes (T/V/D) + Deletar ===
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Treino
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Checkbox(
-                        checked = pericia.treino,
-                        onCheckedChange = onTreinoChange,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Text(
-                        "Trei.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Vantagem
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Checkbox(
-                        checked = pericia.vantagem,
-                        onCheckedChange = onVantagemChange,
-                        modifier = Modifier.size(28.dp),
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                    Text(
-                        "Vant.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Desvantagem
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Checkbox(
-                        checked = pericia.desvantagem,
-                        onCheckedChange = onDesvantagemChange,
-                        modifier = Modifier.size(28.dp),
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.error
-                        )
-                    )
-                    Text(
-                        "Desv.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
                 // Bônus
                 OutlinedTextField(
                     value = if (pericia.bonus == 0) "" else pericia.bonus.toString(),
                     onValueChange = { if (it.length <= 3) onBonusChange(it) },
-                    modifier = Modifier.width(64.dp),
+                    label = { Text("Bônus", fontSize = 10.sp) },
+                    modifier = Modifier.width(70.dp),
                     singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp),
-                    placeholder = { Text("±Bôn", fontSize = 11.sp) },
-                    label = { Text("Bônus", fontSize = 10.sp) }
+                    textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
                 )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Checkboxes T / V / D
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Treino
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { onTreinoChange(!pericia.treino) }
+                    ) {
+                        Checkbox(
+                            checked = pericia.treino,
+                            onCheckedChange = onTreinoChange,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                        Text("T", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Vantagem
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { onVantagemChange(!pericia.vantagem) }
+                    ) {
+                        Checkbox(
+                            checked = pericia.vantagem,
+                            onCheckedChange = onVantagemChange,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.tertiary
+                            ),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Text("V", fontSize = 11.sp)
+                    }
+
+                    // Desvantagem
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { onDesvantagemChange(!pericia.desvantagem) }
+                    ) {
+                        Checkbox(
+                            checked = pericia.desvantagem,
+                            onCheckedChange = onDesvantagemChange,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Text("D", fontSize = 11.sp)
+                    }
+                }
+
+                // Deletar
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Remover",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -498,7 +484,7 @@ fun PericiaDialog(
                             .clickable { expandedAtributo = true }
                     )
 
-                    // Overlay transparente para capturar cliques na área inteira
+                    // Overlay transparente para capturar clique em qualquer área
                     Box(
                         modifier = Modifier
                             .matchParentSize()
