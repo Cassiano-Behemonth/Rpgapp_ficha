@@ -57,9 +57,9 @@ private val Assim_GreenDark  = Color(0xFF2D4228)   // Verde floresta profundo
 private val Assim_Red        = Color(0xFF8B1A1A)   // Vermelho sangue coagulado
 private val Assim_Blue       = Color(0xFF1A3A5C)   // Azul veia profundo
 private val Assim_BlueGlow   = Color(0xFF2E5F8A)   // Azul bioluminescente
-private val Assim_Background = Color(0xFF080A08)   // Quase preto orgânico
-private val Assim_Surface    = Color(0xFF0E130E)   // Superfície verde escuríssima
-private val Assim_SurfaceVar = Color(0xFF131A13)   // Cards — floresta noturna
+private val Assim_Background = Color(0xFF07090B)   // Quase preto com leve tom azulado
+private val Assim_Surface    = Color(0xFF0C0E12)   // Superfície escura orgânica
+private val Assim_SurfaceVar = Color(0xFF14181F)   // Cards — aspecto químico/biológico
 
 // Preto e Vermelho
 private val BlackRed_Primary = Color(0xFFD32F2F)
@@ -192,42 +192,44 @@ fun getColorScheme(theme: AppTheme): ColorScheme {
         )
 
         AppTheme.ASSIMILACAO -> darkColorScheme(
-            // ── Primária: Verde musgo ───────────────────────
-            primary             = Assim_GreenLight,    // #6B8F5E — verde musgo médio
-            onPrimary           = Color(0xFF080A08),
-            primaryContainer    = Assim_GreenDark,     // #2D4228 — floresta profunda
-            onPrimaryContainer  = Assim_GreenLight,
+            // ── Primária: Azul veia profundo (Bioluminescência) ──
+            primary             = Assim_BlueGlow,      // #2E5F8A
+            onPrimary           = Color.White,
+            primaryContainer    = Assim_Blue,          // #1A3A5C
+            onPrimaryContainer  = Color(0xFF8FBFE0),
 
-            // ── Secundária: Azul veia ───────────────────────
-            secondary           = Assim_BlueGlow,      // #2E5F8A — azul bioluminescente
+            // ── Secundária: Vermelho coagulado (Orgânico) ───────
+            secondary           = Assim_Red,           // #8B1A1A
             onSecondary         = Color.White,
-            secondaryContainer  = Assim_Blue,          // #1A3A5C — azul veia profundo
-            onSecondaryContainer = Color(0xFF8FBFE0),
+            secondaryContainer  = Color(0xFF4A0A0A),
+            onSecondaryContainer = Color(0xFFFFABAB),
+
+            // ── Terciária: Verde musgo (Radiação/Survival) ──────
+            tertiary            = Assim_GreenLight,    // #6B8F5E — fica como acento sutil
+            onTertiary          = Color.Black,
 
             // ── Fundo e superfícies ─────────────────────────
-            background          = Assim_Background,    // #080A08 — quase preto orgânico
-            onBackground        = Assim_GreenLight,
+            background          = Assim_Background,
+            onBackground        = Assim_BlueGlow,
 
-            surface             = Assim_Surface,       // #0E130E
-            onSurface           = Assim_GreenLight,
+            surface             = Assim_Surface,
+            onSurface           = Assim_BlueGlow,
 
-            surfaceVariant      = Assim_SurfaceVar,    // #131A13 — cards
-            onSurfaceVariant    = Color(0xFF7A9E72),   // verde acinzentado p/ textos sec.
+            surfaceVariant      = Assim_SurfaceVar,
+            onSurfaceVariant    = Color(0xFF7D9BB5),   // azul acinzentado p/ textos sec.
 
-            surfaceContainer    = Assim_Surface,       // tabs
+            surfaceContainer    = Assim_Surface,
 
-            // ── Erros: Vermelho coagulado ───────────────────
-            error               = Assim_Red,           // #8B1A1A
-            onError             = Color(0xFFFFCDD2),
-            errorContainer      = Color(0xFF4A0A0A),
-            onErrorContainer    = Color(0xFFFFABAB),
+            // ── Erros ──────────────────────────────────────
+            error               = Assim_Red,
+            onError             = Color.White,
 
             // ── Bordas ──────────────────────────────────────
-            outline             = Assim_Green,         // #4A6741
+            outline             = Assim_Blue,
             outlineVariant      = Color(0xFF1E2C1E),
 
-            inverseSurface      = Assim_GreenLight,
-            inverseOnSurface    = Color(0xFF080A08)
+            inverseSurface      = Assim_BlueGlow,
+            inverseOnSurface    = Color.Black
         )
 
         AppTheme.BLACK_RED -> darkColorScheme(

@@ -119,9 +119,9 @@ fun ThemeSelectorScreen(
 
         ThemeCard(
             title = "🧬 Assimilação",
-            subtitle = "Verde musgo • Azul veia • Vermelho coagulado",
-            primaryColor = Color(0xFF6B8F5E),
-            backgroundColor = Color(0xFF080A08),
+            subtitle = "Azul veia • Vermelho coagulado • Verde musgo",
+            primaryColor = Color(0xFF2E5F8A),
+            backgroundColor = Color(0xFF07090B),
             isSelected = currentTheme == AppTheme.ASSIMILACAO,
             onClick = { onThemeSelected(AppTheme.ASSIMILACAO) }
         )
