@@ -9,6 +9,9 @@ interface HabilidadeVelhoOesteDao {
     @Query("SELECT * FROM habilidades_velho_oeste WHERE fichaId = :fichaId ORDER BY nome")
     fun getHabilidadesFromFicha(fichaId: Long): Flow<List<HabilidadeVelhoOesteEntity>>
 
+    @Query("SELECT * FROM habilidades_velho_oeste WHERE fichaId = :fichaId")
+    suspend fun getHabilidadesOnce(fichaId: Long): List<HabilidadeVelhoOesteEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHabilidade(habilidade: HabilidadeVelhoOesteEntity): Long
 

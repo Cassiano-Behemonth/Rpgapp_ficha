@@ -15,6 +15,9 @@ interface HabilidadeFantasiaDao {
     @Query("SELECT * FROM habilidades_fantasia WHERE fichaId = :fichaId ORDER BY categoria, nome")
     fun getHabilidadesFromFicha(fichaId: Long): Flow<List<HabilidadeFantasiaEntity>>
 
+    @Query("SELECT * FROM habilidades_fantasia WHERE fichaId = :fichaId")
+    suspend fun getHabilidadesOnce(fichaId: Long): List<HabilidadeFantasiaEntity>
+
     /**
      * Obtém habilidades por categoria específica
      */

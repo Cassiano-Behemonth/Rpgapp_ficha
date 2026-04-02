@@ -9,6 +9,9 @@ interface ItemFantasiaDao {
     @Query("SELECT * FROM itens_fantasia WHERE fichaId = :fichaId ORDER BY nome")
     fun getItensFromFicha(fichaId: Long): Flow<List<ItemFantasiaEntity>>
 
+    @Query("SELECT * FROM itens_fantasia WHERE fichaId = :fichaId")
+    suspend fun getItensOnce(fichaId: Long): List<ItemFantasiaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: ItemFantasiaEntity): Long
 

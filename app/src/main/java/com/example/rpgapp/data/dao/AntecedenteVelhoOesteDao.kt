@@ -9,6 +9,9 @@ interface AntecedenteVelhoOesteDao {
     @Query("SELECT * FROM antecedentes_velho_oeste WHERE fichaId = :fichaId ORDER BY nome")
     fun getAntecedentesFromFicha(fichaId: Long): Flow<List<AntecedenteVelhoOesteEntity>>
 
+    @Query("SELECT * FROM antecedentes_velho_oeste WHERE fichaId = :fichaId")
+    suspend fun getAntecedentesOnce(fichaId: Long): List<AntecedenteVelhoOesteEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAntecedente(antecedente: AntecedenteVelhoOesteEntity): Long
 

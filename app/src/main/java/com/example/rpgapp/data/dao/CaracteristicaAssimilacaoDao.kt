@@ -10,6 +10,9 @@ interface CaracteristicaAssimilacaoDao {
     @Query("SELECT * FROM caracteristicas_assimilacao WHERE fichaId = :fichaId ORDER BY custo DESC, nome")
     fun getCaracteristicasFromFicha(fichaId: Long): Flow<List<CaracteristicaAssimilacaoEntity>>
 
+    @Query("SELECT * FROM caracteristicas_assimilacao WHERE fichaId = :fichaId")
+    suspend fun getCaracteristicasOnce(fichaId: Long): List<CaracteristicaAssimilacaoEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCaracteristica(caracteristica: CaracteristicaAssimilacaoEntity): Long
 

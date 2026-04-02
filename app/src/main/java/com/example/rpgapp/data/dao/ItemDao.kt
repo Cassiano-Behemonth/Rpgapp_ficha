@@ -10,6 +10,9 @@ interface ItemDao {
     @Query("SELECT * FROM itens WHERE fichaId = :fichaId ORDER BY nome")
     fun getItensFromFicha(fichaId: Long): Flow<List<ItemEntity>>
 
+    @Query("SELECT * FROM itens WHERE fichaId = :fichaId")
+    suspend fun getItensOnce(fichaId: Long): List<ItemEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: ItemEntity): Long
 

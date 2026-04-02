@@ -15,6 +15,9 @@ interface MagiaFantasiaDao {
     @Query("SELECT * FROM magias_fantasia WHERE fichaId = :fichaId ORDER BY circulo, nome")
     fun getMagiasFromFicha(fichaId: Long): Flow<List<MagiaFantasiaEntity>>
 
+    @Query("SELECT * FROM magias_fantasia WHERE fichaId = :fichaId")
+    suspend fun getMagiasOnce(fichaId: Long): List<MagiaFantasiaEntity>
+
     /**
      * Obtém magias por círculo específico
      */

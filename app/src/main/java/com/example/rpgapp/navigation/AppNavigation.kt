@@ -13,6 +13,8 @@ import com.example.rpgapp.viewmodel.FichaViewModel
 import com.example.rpgapp.viewmodel.FichaVelhoOesteViewModel
 import com.example.rpgapp.viewmodel.FichaAssimilacaoViewModel
 import com.example.rpgapp.viewmodel.FichaFantasiaViewModel
+import com.example.rpgapp.data.backup.BackupManager
+import com.example.rpgapp.data.AppDatabase
 
 @Composable
 fun AppNavigation(
@@ -49,6 +51,9 @@ fun AppNavigation(
         )
     )
 
+    val db = remember { AppDatabase.getDatabase(context) }
+    val backupManager = remember { BackupManager(db) }
+
     // Define a rota inicial baseada no modo selecionado (só na primeira composição)
     val startDestination = remember {
         when (currentMode) {
@@ -67,6 +72,7 @@ fun AppNavigation(
             ThemeSelectorScreen(
                 currentTheme = currentTheme,
                 currentMode = currentMode,
+                backupManager = backupManager,
                 onThemeSelected = { theme ->
                     onThemeChange(theme)
                     when (currentMode) {

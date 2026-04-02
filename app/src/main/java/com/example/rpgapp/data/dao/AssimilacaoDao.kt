@@ -10,6 +10,9 @@ interface AssimilacaoDao {
     @Query("SELECT * FROM assimilacoes WHERE fichaId = :fichaId ORDER BY tipo, nome")
     fun getAssimilacoesFromFicha(fichaId: Long): Flow<List<AssimilacaoEntity>>
 
+    @Query("SELECT * FROM assimilacoes WHERE fichaId = :fichaId")
+    suspend fun getAssimilacoesOnce(fichaId: Long): List<AssimilacaoEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAssimilacao(assimilacao: AssimilacaoEntity): Long
 

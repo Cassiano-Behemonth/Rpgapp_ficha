@@ -9,6 +9,9 @@ interface PericiaFantasiaDao {
     @Query("SELECT * FROM pericias_fantasia WHERE fichaId = :fichaId ORDER BY nome")
     fun getPericiasFromFicha(fichaId: Long): Flow<List<PericiaFantasiaEntity>>
 
+    @Query("SELECT * FROM pericias_fantasia WHERE fichaId = :fichaId")
+    suspend fun getPericiasOnce(fichaId: Long): List<PericiaFantasiaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPericia(pericia: PericiaFantasiaEntity): Long
 

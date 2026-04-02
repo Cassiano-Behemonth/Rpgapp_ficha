@@ -9,6 +9,9 @@ interface FichaVelhoOesteDao {
     @Query("SELECT * FROM fichas_velho_oeste LIMIT 1")
     fun getFicha(): Flow<FichaVelhoOesteEntity?>
 
+    @Query("SELECT * FROM fichas_velho_oeste LIMIT 1")
+    suspend fun getFichaOnce(): FichaVelhoOesteEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFicha(ficha: FichaVelhoOesteEntity): Long
 
