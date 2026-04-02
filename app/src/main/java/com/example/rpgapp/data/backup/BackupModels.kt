@@ -1,6 +1,8 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
 package com.example.rpgapp.data.backup
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.InternalSerializationApi
 
 @Serializable
 data class FichaBackupWrapper(
@@ -117,7 +119,7 @@ data class FichaFantasiaDTO(
     val nivel: Int, val xp: Int, val bonusArmadura: Int, val bonusEscudo: Int,
     val outrosBonusDefesa: Int, val bonusFortitude: Int, val bonusReflexos: Int,
     val bonusVontade: Int, val deslocamento: String, val tamanho: String,
-    val penalidade_armadura: Int, val limiteCargaBonus: Int, val dinheiro: String,
+    val penalidadeArmadura: Int, val limiteCargaBonus: Int, val dinheiro: String,
     val nome: String, val jogador: String, val raca: String, val origem: String,
     val divindade: String, val classes: String, val aparencia: String,
     val personalidade: String, val historia: String, val anotacoes: String
