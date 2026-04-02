@@ -137,8 +137,8 @@ class BackupManager(private val db: AppDatabase) {
     // --- MAPPERS HORROR ---
     private fun FichaEntity.toDTO() = FichaDTO(forca, agilidade, presenca, nex, vidaAtual, vidaMax, sanidadeAtual, sanidadeMax, nome, jogador, origem, classe, trilha, patente, aparencia, personalidade, historia, anotacoes)
     private fun FichaDTO.toEntity() = FichaEntity(forca = forca, agilidade = agilidade, presenca = presenca, nex = nex, vidaAtual = vidaAtual, vidaMax = vidaMax, sanidadeAtual = sanidadeAtual, sanidadeMax = sanidadeMax, nome = nome, jogador = jogador, origem = origem, classe = classe, trilha = trilha, patente = patente, aparencia = aparencia, personalidade = personalidade, historia = historia, anotacoes = anotacoes)
-    private fun PericiaEntity.toDTO() = PericiaDTO(nome, atributo, vantagem, desvantagem)
-    private fun PericiaDTO.toEntity(fichaId: Long) = PericiaEntity(fichaId = fichaId, nome = nome, atributo = atributo, vantagem = vantagem, desvantagem = desvantagem)
+    private fun PericiaEntity.toDTO() = PericiaDTO(nome, atributo, treino, vantagem, desvantagem)
+    private fun PericiaDTO.toEntity(fichaId: Long) = PericiaEntity(fichaId = fichaId, nome = nome, atributo = atributo, treino = treino, vantagem = vantagem, desvantagem = desvantagem)
     private fun ItemEntity.toDTO() = ItemDTO(nome, quantidade, descricao)
     private fun ItemDTO.toEntity(fichaId: Long) = ItemEntity(fichaId = fichaId, nome = nome, quantidade = quantidade, descricao = descricao)
 

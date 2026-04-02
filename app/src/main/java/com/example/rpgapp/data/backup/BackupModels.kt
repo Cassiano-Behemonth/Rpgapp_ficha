@@ -30,7 +30,7 @@ data class FichaDTO(
 )
 
 @Serializable
-data class PericiaDTO(val nome: String, val atributo: String, val vantagem: Int = 0, val desvantagem: Int = 0)
+data class PericiaDTO(val nome: String, val atributo: String, val treino: Boolean = false, val vantagem: Boolean = false, val desvantagem: Boolean = false)
 
 @Serializable
 data class ItemDTO(val nome: String, val quantidade: String, val descricao: String)
@@ -124,7 +124,7 @@ data class FichaFantasiaDTO(
 )
 
 @Serializable
-data class PericiaFantasiaDTO(val nome: String, val atributo: String, val treinada: Int, val vantagem: Int, val desvantagem: Int, val bonus: Int)
+data class PericiaFantasiaDTO(val nome: String, val atributo: String, val treinada: Boolean, val vantagem: Boolean, val desvantagem: Boolean, val bonus: Int)
 
 @Serializable
 data class ItemFantasiaDTO(
