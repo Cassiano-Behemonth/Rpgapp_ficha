@@ -71,8 +71,6 @@ fun AppNavigation(
         composable("theme_selector") {
             ThemeSelectorScreen(
                 currentTheme = currentTheme,
-                currentMode = currentMode,
-                backupManager = backupManager,
                 onThemeSelected = { theme ->
                     onThemeChange(theme)
                     when (currentMode) {
