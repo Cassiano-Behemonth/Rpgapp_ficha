@@ -110,6 +110,7 @@ fun AppNavigation(
         composable("game_mode_selector") {
             GameModeSelectorScreen(
                 currentMode = currentMode,
+                backupManager = backupManager,
                 onModeSelected = { mode ->
                     onModeChange(mode)
                     when (mode) {

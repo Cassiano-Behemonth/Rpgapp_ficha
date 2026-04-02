@@ -16,15 +16,102 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.example.rpgapp.data.backup.BackupManager
+import kotlinx.coroutines.launch
+import android.widget.Toast
 
 @Composable
 fun GameModeSelectorScreen(
     currentMode: GameMode?,
+    backupManager: BackupManager? = null,
     onModeSelected: (GameMode) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showImportConfirm by remember { mutableStateOf(false) }
+    var pendingJson by remember { mutableStateOf<String?>(null) }
+
+    // Launcher para EXPORTAR
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json"),
+        onResult = { uri ->
+            uri?.let {
+                scope.launch {
+                    try {
+                        val json = backupManager?.exportModeData(currentMode ?: GameMode.INVESTIGACAO_HORROR)
+                        if (json != null) {
+                            context.contentResolver.openOutputStream(it)?.use { out ->
+                                out.write(json.toByteArray())
+                            }
+                            Toast.makeText(context, "Backup exportado!", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Erro ao exportar", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    )
+
+    // Launcher para IMPORTAR
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                scope.launch {
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(it)
+                        val json = inputStream?.bufferedReader()?.use { reader -> reader.readText() }
+                        if (json != null) {
+                            pendingJson = json
+                            showImportConfirm = true
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Erro ao ler arquivo", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    )
+
+    if (showImportConfirm && pendingJson != null) {
+        AlertDialog(
+            onDismissRequest = { showImportConfirm = false },
+            title = { Text("Restaurar Ficha?") },
+            text = { Text("Isso apagará a ficha atual deste modo e a substituirá pelos dados do arquivo. Deseja continuar?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val mode = backupManager?.importData(pendingJson!!)
+                            if (mode != null) {
+                                Toast.makeText(context, "Ficha de ${mode.name} restaurada!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "Arquivo inválido ou erro na importação", Toast.LENGTH_SHORT).show()
+                            }
+                            showImportConfirm = false
+                            pendingJson = null
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Restaurar", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportConfirm = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     val background = MaterialTheme.colorScheme.background
     val onBackground = MaterialTheme.colorScheme.onBackground
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
@@ -137,8 +224,81 @@ fun GameModeSelectorScreen(
             style = MaterialTheme.typography.bodySmall,
             color = onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
         )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+
+        Text(
+            "Gestão de Dados",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        Text(
+            "Exportar ou importar fichas individualmente em JSON",
+            style = MaterialTheme.typography.bodySmall,
+            color = onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        // CARD EXPORTAR
+        BackupActionCard(
+            title = "Exportar Ficha",
+            subtitle = "Salvar ${currentMode?.name ?: "atual"} em JSON",
+            icon = "📤",
+            color = MaterialTheme.colorScheme.primary,
+            onClick = {
+                val fileName = "Ficha_${currentMode?.name ?: "Backup"}.json"
+                exportLauncher.launch(fileName)
+            }
+        )
+
+        // CARD IMPORTAR
+        BackupActionCard(
+            title = "Importar Ficha",
+            subtitle = "Restaurar dados de um arquivo",
+            icon = "📥",
+            color = MaterialTheme.colorScheme.secondary,
+            onClick = {
+                importLauncher.launch(arrayOf("application/json"))
+            }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun BackupActionCard(
+    title: String,
+    subtitle: String,
+    icon: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.1f)
+        ),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(icon, fontSize = 24.sp, modifier = Modifier.padding(end = 16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }
 
